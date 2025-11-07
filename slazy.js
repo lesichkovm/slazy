@@ -1,26 +1,46 @@
 function checkVisible(elementInstance) {
-  // Check if the image element belongs to one of the carousels (Slick or Splide)
-  if ($(elementInstance).hasClass("carousel_item_image")) {
-    if (
-      $(elementInstance).closest(".carousel_item").attr("aria-hidden") ===
-      "true"
-    ) {
+  const jq = window.$ || window.jQuery;
+  const $element = typeof jq === "function" ? jq(elementInstance) : null;
+
+  const isHidden = (value) => {
+    if (value == null) {
       return false;
     }
-    // If image is not visible (it is not scrolled into view) we return false
-    if (
-      $(elementInstance).closest("div.splide__slide").attr("aria-hidden") ===
-      "true"
-    ) {
+    const normalized = String(value).toLowerCase();
+    return normalized === "true" || normalized === "1";
+  };
+
+  if ($element && $element.hasClass("carousel_item_image")) {
+    const carouselItem = $element.closest(".carousel_item");
+    const carouselHidden =
+      carouselItem && typeof carouselItem.attr === "function"
+        ? carouselItem.attr("aria-hidden")
+        : null;
+    if (isHidden(carouselHidden)) {
+      return false;
+    }
+
+    const splideSlide = $element.closest("div.splide__slide");
+    const splideHidden =
+      splideSlide && typeof splideSlide.attr === "function"
+        ? splideSlide.attr("aria-hidden")
+        : null;
+    if (isHidden(splideHidden)) {
       return false;
     }
   }
+
   const rect = elementInstance.getBoundingClientRect();
-  const viewHeight = Math.max(
-    document.documentElement.clientHeight,
-    window.innerHeight
+  const viewportHeight = Math.max(
+    (document.documentElement && document.documentElement.clientHeight) || 0,
+    window.innerHeight || 0
   );
-  return !(rect.bottom < 0 || rect.top - viewHeight >= 0);
+
+  if (viewportHeight === 0) {
+    return rect.bottom >= 0;
+  }
+
+  return rect.bottom >= 0 && rect.top < viewportHeight;
 }
 
 // function preloadLazyImage(imageElement) {
@@ -75,7 +95,7 @@ function checkVisible(elementInstance) {
 
 function loadLazyImage() {
   // Requires JQuery
-  if (window.JQuery) {
+  if (!window.$ && !window.jQuery) {
     return;
   }
 
@@ -86,10 +106,16 @@ function loadLazyImage() {
 
   $("img[data-slazy-src]:not(.image-loaded):not(.carousel_item_image)").each(
     function () {
-      const realWidth = $(this).css("width").includes("%")
+      const widthCss = $(this).css("width");
+      let realWidth = widthCss.includes("%")
         ? 0
-        : parseInt($(this).width());
-      const parentWidth = parseInt($(this).parent().width());
+        : parseInt($(this).width(), 10);
+      const parentWidth = parseInt($(this).parent().width(), 10) || 0;
+
+      if (realWidth === 0 && parentWidth > 0) {
+        realWidth = parentWidth;
+      }
+
       if (realWidth === 0) {
         return;
       }
@@ -123,8 +149,14 @@ function loadLazyImage() {
         newImg.onload = function () {
           self.src = this.src;
           $(self).data("queue", "loaded");
-          $(self).attr("width", newImg.width);
-          $(self).attr("height", newImg.height);
+          const widthValue = Number(
+            this.width || this.naturalWidth || realWidth || 0
+          );
+          const heightValue = Number(
+            this.height || this.naturalHeight || 0
+          );
+          $(self).attr("width", widthValue);
+          $(self).attr("height", heightValue);
         };
         newImg.src = url;
         $(this).addClass("image-loaded");
@@ -136,17 +168,26 @@ function loadLazyImage() {
 let loadingLazyImages = setInterval(loadLazyImage, 1000);
 
 function loadLazyUrl() {
+  if (!window.$ && !window.jQuery) {
+    return;
+  }
+
   if ($("*[data-slazy-url]:not(.image-loaded)").length === 0) {
-    clearInterval(loadingLazyImages);
+    clearInterval(loadingLazyUrl);
     return;
   }
 
   $("*[data-slazy-url]:not(.image-loaded):not(.carousel_item_image)").each(
     function () {
-      const realWidth = $(this).css("width").includes("%")
+      const widthCss = $(this).css("width");
+      let realWidth = widthCss.includes("%")
         ? 0
-        : parseInt($(this).width());
-      const parentWidth = parseInt($(this).parent().width());
+        : parseInt($(this).width(), 10);
+      const parentWidth = parseInt($(this).parent().width(), 10) || 0;
+
+      if (realWidth === 0 && parentWidth > 0) {
+        realWidth = parentWidth;
+      }
 
       if (realWidth === 0) {
         return;

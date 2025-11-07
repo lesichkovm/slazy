@@ -8,6 +8,7 @@ describe('loadLazyUrl', function() {
     let registerElementWrapper;
     let original$;
     let originaljQuery;
+    let originalCheckVisible;
 
     function createElementWrapper(overrides = {}) {
         const dataStore = Object.assign({ 'slazy-url': 'background.jpg' }, overrides.initialData);
@@ -61,7 +62,7 @@ describe('loadLazyUrl', function() {
             return wrapper;
         };
 
-        window.$ = jasmine.createSpy('$').and.callFake(function(selector) {
+        const jquerySpy = jasmine.createSpy('$').and.callFake(function(selector) {
             if (typeof selector === 'string') {
                 if (selectorHandlers[selector]) {
                     return selectorHandlers[selector]();
@@ -87,7 +88,11 @@ describe('loadLazyUrl', function() {
             return registerElementWrapper(selector);
         });
 
+        window.$ = jquerySpy;
+        window.jQuery = jquerySpy;
+
         // Mock checkVisible
+        originalCheckVisible = window.checkVisible;
         window.checkVisible = jasmine.createSpy('checkVisible').and.returnValue(true);
 
         // Mock intervals
@@ -98,6 +103,7 @@ describe('loadLazyUrl', function() {
 
         // Reset loadingLazyUrl
         loadingLazyUrl = undefined;
+        loadingLazyImages = 'images-handle';
     });
 
     afterEach(function() {
@@ -105,12 +111,26 @@ describe('loadLazyUrl', function() {
         window.clearInterval = originalClearInterval;
         window.$ = original$;
         window.jQuery = originaljQuery;
-        delete window.checkVisible;
+        if (typeof originalCheckVisible === 'undefined') {
+            delete window.checkVisible;
+        } else {
+            window.checkVisible = originalCheckVisible;
+        }
+        originalCheckVisible = undefined;
     });
 
     it('should do nothing if no lazy URLs found', function() {
         loadLazyUrl();
-        expect(window.clearInterval).toHaveBeenCalled();
+        expect(window.clearInterval).toHaveBeenCalledWith(loadingLazyUrl);
+    });
+
+    it('should exit early when jQuery is unavailable', function() {
+        window.$ = undefined;
+        window.jQuery = undefined;
+
+        expect(function() {
+            loadLazyUrl();
+        }).not.toThrow();
     });
 
     it('should skip elements without real width', function() {
@@ -122,8 +142,9 @@ describe('loadLazyUrl', function() {
             return {
                 each: function(callback) {
                     const element = {};
-                    const wrapper = registerElementWrapper(element);
-                    wrapper.css.and.returnValue('100%');
+                    const wrapper = registerElementWrapper(element, {
+                        initialStyles: { width: '100%' }
+                    });
                     wrapper.width.and.returnValue(0);
                     callback.call(element);
                 }
@@ -154,6 +175,115 @@ describe('loadLazyUrl', function() {
 
         loadLazyUrl();
         expect(processed).toBe(true);
+    });
+
+    it('should use parent width when element width is percentage based', function() {
+        setSelectorHandler('*[data-slazy-url]:not(.image-loaded)', function() {
+            return { length: 1 };
+        });
+
+        let wrapper;
+        setSelectorHandler('*[data-slazy-url]:not(.image-loaded):not(.carousel_item_image)', function() {
+            return {
+                each: function(callback) {
+                    const element = {
+                        style: {}
+                    };
+                    wrapper = registerElementWrapper(element, {
+                        initialStyles: { width: '100%' }
+                    });
+                    wrapper.width.and.returnValue(0);
+                    wrapper.parent.and.returnValue({
+                        width: jasmine.createSpy('parentWidth').and.returnValue(250)
+                    });
+                    wrapper.data('slazy-url', 'background-640x480.jpg');
+                    callback.call(element);
+                }
+            };
+        });
+
+        loadLazyUrl();
+
+        expect(wrapper.addClass).toHaveBeenCalledWith('image-loaded');
+    });
+
+    it('should not process elements when checkVisible returns false', function() {
+        window.checkVisible.and.returnValue(false);
+
+        setSelectorHandler('*[data-slazy-url]:not(.image-loaded)', function() {
+            return { length: 1 };
+        });
+
+        let wrapper;
+        setSelectorHandler('*[data-slazy-url]:not(.image-loaded):not(.carousel_item_image)', function() {
+            return {
+                each: function(callback) {
+                    const element = {
+                        style: {}
+                    };
+                    wrapper = registerElementWrapper(element);
+                    wrapper.data('slazy-url', 'background-640x480.jpg');
+                    callback.call(element);
+                }
+            };
+        });
+
+        loadLazyUrl();
+
+        expect(wrapper.css).not.toHaveBeenCalledWith('background-image', jasmine.any(String));
+        expect(wrapper.data('queue')).not.toBe('loaded');
+    });
+
+    it('should skip already queued elements', function() {
+        setSelectorHandler('*[data-slazy-url]:not(.image-loaded)', function() {
+            return { length: 1 };
+        });
+
+        setSelectorHandler('*[data-slazy-url]:not(.image-loaded):not(.carousel_item_image)', function() {
+            return {
+                each: function(callback) {
+                    const element = {
+                        style: {}
+                    };
+                    registerElementWrapper(element, {
+                        initialData: { queue: 'loading', 'slazy-url': 'background-640x480.jpg' }
+                    });
+                    callback.call(element);
+                }
+            };
+        });
+
+        loadLazyUrl();
+
+        expect(window.checkVisible).not.toHaveBeenCalled();
+    });
+
+    it('should skip carousel elements', function() {
+        setSelectorHandler('*[data-slazy-url]:not(.image-loaded)', function() {
+            return { length: 1 };
+        });
+
+        setSelectorHandler('*[data-slazy-url]:not(.image-loaded):not(.carousel_item_image)', function() {
+            return {
+                each: function() {
+                    // simulate zero non-carousel matches
+                }
+            };
+        });
+
+        const element = {};
+        const wrapper = registerElementWrapper(element);
+        wrapper.hasClass.and.callFake(function(className) {
+            if (className === 'carousel_item_image') {
+                return true;
+            }
+            return false;
+        });
+        wrapper.data('slazy-url', 'background-640x480.jpg');
+
+        loadLazyUrl();
+
+        expect(wrapper.css).not.toHaveBeenCalledWith('background-image', jasmine.any(String));
     });
 
     it('should resize URLs when no-resize class is not present', function() {

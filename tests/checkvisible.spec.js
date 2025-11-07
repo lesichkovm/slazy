@@ -55,7 +55,7 @@ describe('checkVisible', function() {
             if (el === testElement) {
                 return jQueryStub;
             }
-            return original$(el);
+            return typeof original$ === 'function' ? original$(el) : undefined;
         });
     });
 
@@ -76,7 +76,11 @@ describe('checkVisible', function() {
             delete document.documentElement.clientHeight;
         }
 
-        window.$ = original$;
+        if (typeof original$ === 'undefined') {
+            delete window.$;
+        } else {
+            window.$ = original$;
+        }
         jQueryStub = null;
     });
 

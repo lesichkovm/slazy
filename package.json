@@ -1,0 +1,17 @@
+{
+  "name": "@lesichkovm/web",
+  "version": "2.9.0",
+  "description": "",
+  "__main": "index.js",
+  "main": "src/web.js",
+  "scripts": {
+    "prebuild": "node -e \"const fs = require('fs'); if (!fs.existsSync('dist')) fs.mkdirSync('dist');\"",
+    "build": "node src/esbuild.config.js",
+    "postbuild": "uglifyjs --compress --mangle --output ./dist/slazy.min.js -- slazy.js"
+  },
+  "author": "",
+  "license": "AGPL-3.0-only",
+  "devDependencies": {
+    "uglify-js": "^3.14.4"
+  }
+}
