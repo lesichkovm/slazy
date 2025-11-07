@@ -82,8 +82,243 @@ function checkVisible(elementInstance) {
   return rect.bottom >= 0 && rect.top < viewportHeight;
 }
 
-function loadLazyImage() {
+function getJq() {
   const jq = window.$ || window.jQuery;
+  return typeof jq === "function" ? jq : null;
+}
+
+function dataKeyToDatasetKey(key) {
+  return key.replace(/-([a-z])/g, (_, char) => char.toUpperCase());
+}
+
+function getData(element, key) {
+  if (!element) {
+    return undefined;
+  }
+
+  const attrName = `data-${key}`;
+
+  if (typeof element.getAttribute === "function") {
+    const attrValue = element.getAttribute(attrName);
+    if (attrValue != null) {
+      return attrValue;
+    }
+  }
+
+  if (element.dataset) {
+    const datasetKey = dataKeyToDatasetKey(key);
+    if (Object.prototype.hasOwnProperty.call(element.dataset, datasetKey)) {
+      return element.dataset[datasetKey];
+    }
+  }
+
+  const jq = getJq();
+  if (jq) {
+    return jq(element).data(key);
+  }
+
+  return undefined;
+}
+
+function setData(element, key, value) {
+  if (!element) {
+    return;
+  }
+
+  const attrName = `data-${key}`;
+
+  if (typeof element.setAttribute === "function") {
+    element.setAttribute(attrName, value);
+    return;
+  }
+
+  if (element.dataset) {
+    const datasetKey = dataKeyToDatasetKey(key);
+    element.dataset[datasetKey] = value;
+    return;
+  }
+
+  const jq = getJq();
+  if (jq) {
+    jq(element).data(key, value);
+  }
+}
+
+function hasClass(element, className) {
+  if (element && element.classList && typeof element.classList.contains === "function") {
+    return element.classList.contains(className);
+  }
+
+  const jq = getJq();
+  if (jq) {
+    return jq(element).hasClass(className);
+  }
+
+  return false;
+}
+
+function addClass(element, className) {
+  if (element && element.classList && typeof element.classList.add === "function") {
+    element.classList.add(className);
+    return;
+  }
+
+  const jq = getJq();
+  if (jq) {
+    jq(element).addClass(className);
+  }
+}
+
+function isDomElement(value) {
+  return value && typeof value === "object" && value.nodeType === 1;
+}
+
+function getStyleValue(element, property) {
+  if (!element) {
+    return "";
+  }
+
+  if (element.style && element.style[property] != null && element.style[property] !== "") {
+    return element.style[property];
+  }
+
+  if (
+    isDomElement(element) &&
+    typeof window !== "undefined" &&
+    typeof window.getComputedStyle === "function"
+  ) {
+    const computed = window.getComputedStyle(element);
+    if (computed) {
+      const value = computed.getPropertyValue(property);
+      if (value != null && value !== "") {
+        return value;
+      }
+    }
+  }
+
+  const jq = getJq();
+  if (jq) {
+    const fallback = jq(element).css(property);
+    if (typeof fallback === "string") {
+      return fallback;
+    }
+  }
+
+  return "";
+}
+
+function getElementWidth(element) {
+  if (!element) {
+    return 0;
+  }
+
+  if (isDomElement(element) && typeof element.getBoundingClientRect === "function") {
+    const rect = element.getBoundingClientRect();
+    if (rect && typeof rect.width === "number" && rect.width > 0) {
+      return rect.width;
+    }
+  }
+
+  if (isDomElement(element) && typeof element.offsetWidth === "number" && element.offsetWidth > 0) {
+    return element.offsetWidth;
+  }
+
+  const widthValue = parseFloat(getStyleValue(element, "width"));
+  if (!Number.isNaN(widthValue) && widthValue > 0) {
+    return widthValue;
+  }
+
+  const jq = getJq();
+  if (jq) {
+    const wrapped = jq(element);
+    if (wrapped && typeof wrapped.width === "function") {
+      const width = wrapped.width();
+      if (typeof width === "number" && width > 0) {
+        return width;
+      }
+      const parsedWidth = parseFloat(width);
+      if (!Number.isNaN(parsedWidth) && parsedWidth > 0) {
+        return parsedWidth;
+      }
+    }
+  }
+
+  return 0;
+}
+
+function getParentWidth(element) {
+  if (!element) {
+    return 0;
+  }
+
+  if (isDomElement(element) && element.parentElement) {
+    const domParentWidth = Math.round(getElementWidth(element.parentElement));
+    if (domParentWidth > 0) {
+      return domParentWidth;
+    }
+  }
+
+  const jq = getJq();
+  if (jq) {
+    const wrapped = jq(element);
+    if (wrapped && typeof wrapped.parent === "function") {
+      const parentWrapper = wrapped.parent();
+      if (parentWrapper) {
+        if (typeof parentWrapper.width === "function") {
+          const width = parentWrapper.width();
+          if (typeof width === "number" && width > 0) {
+            return Math.round(width);
+          }
+          const parsedWidth = parseFloat(width);
+          if (!Number.isNaN(parsedWidth) && parsedWidth > 0) {
+            return Math.round(parsedWidth);
+          }
+        }
+
+        if (parentWrapper[0]) {
+          const wrappedDomWidth = Math.round(getElementWidth(parentWrapper[0]));
+          if (wrappedDomWidth > 0) {
+            return wrappedDomWidth;
+          }
+        }
+      }
+    }
+  }
+
+  return 0;
+}
+
+function getBackgroundImage(element) {
+  const styleValue = getStyleValue(element, "background-image");
+  return typeof styleValue === "string" ? styleValue : "";
+}
+
+function setBackgroundImage(element, value) {
+  if (!element) {
+    return;
+  }
+
+  const jq = getJq();
+  const useJq = Boolean(jq);
+
+  if (element.style) {
+    element.style.backgroundImage = value;
+    if (useJq) {
+      const wrapped = jq(element);
+      if (wrapped && typeof wrapped.css === "function") {
+        wrapped.css("background-image", value);
+      }
+    }
+    return;
+  }
+
+  if (useJq) {
+    jq(element).css("background-image", value);
+  }
+}
+
+function loadLazyImage() {
+  const jq = getJq();
 
   if (typeof jq !== "function") {
     return;
@@ -158,225 +393,7 @@ function loadLazyImage() {
 let loadingLazyImages = setInterval(loadLazyImage, 1000);
 
 function loadLazyUrl() {
-  const jq = window.$ || window.jQuery;
-
-  const dataKeyToDatasetKey = (key) =>
-    key.replace(/-([a-z])/g, (_, char) => char.toUpperCase());
-
-  const getData = (element, key) => {
-    if (!element) {
-      return undefined;
-    }
-    const attrName = `data-${key}`;
-
-    if (typeof element.getAttribute === "function") {
-      const attrValue = element.getAttribute(attrName);
-      if (attrValue != null) {
-        return attrValue;
-      }
-    }
-
-    if (element.dataset) {
-      const datasetKey = dataKeyToDatasetKey(key);
-      if (Object.prototype.hasOwnProperty.call(element.dataset, datasetKey)) {
-        return element.dataset[datasetKey];
-      }
-    }
-
-    if (typeof jq === "function") {
-      return jq(element).data(key);
-    }
-
-    return undefined;
-  };
-
-  const setData = (element, key, value) => {
-    if (!element) {
-      return;
-    }
-    const attrName = `data-${key}`;
-
-    if (typeof element.setAttribute === "function") {
-      element.setAttribute(attrName, value);
-      return;
-    }
-
-    if (element.dataset) {
-      const datasetKey = dataKeyToDatasetKey(key);
-      element.dataset[datasetKey] = value;
-      return;
-    }
-
-    if (typeof jq === "function") {
-      jq(element).data(key, value);
-    }
-  };
-
-  const hasClass = (element, className) => {
-    if (element && element.classList && typeof element.classList.contains === "function") {
-      return element.classList.contains(className);
-    }
-
-    if (typeof jq === "function") {
-      return jq(element).hasClass(className);
-    }
-
-    return false;
-  };
-
-  const addClass = (element, className) => {
-    if (element && element.classList && typeof element.classList.add === "function") {
-      element.classList.add(className);
-      return;
-    }
-
-    if (typeof jq === "function") {
-      jq(element).addClass(className);
-    }
-  };
-
-  const isDomElement = (value) =>
-    value && typeof value === "object" && value.nodeType === 1;
-
-  const getStyleValue = (element, property) => {
-    if (!element) {
-      return "";
-    }
-
-    if (element.style && element.style[property] != null && element.style[property] !== "") {
-      return element.style[property];
-    }
-
-    if (
-      isDomElement(element) &&
-      typeof window !== "undefined" &&
-      typeof window.getComputedStyle === "function"
-    ) {
-      const computed = window.getComputedStyle(element);
-      if (computed) {
-        const value = computed.getPropertyValue(property);
-        if (value != null && value !== "") {
-          return value;
-        }
-      }
-    }
-
-    if (typeof jq === "function") {
-      const fallback = jq(element).css(property);
-      if (typeof fallback === "string") {
-        return fallback;
-      }
-    }
-
-    return "";
-  };
-
-  const getElementWidth = (element) => {
-    if (!element) {
-      return 0;
-    }
-
-    if (isDomElement(element) && typeof element.getBoundingClientRect === "function") {
-      const rect = element.getBoundingClientRect();
-      if (rect && typeof rect.width === "number" && rect.width > 0) {
-        return rect.width;
-      }
-    }
-
-    if (isDomElement(element) && typeof element.offsetWidth === "number" && element.offsetWidth > 0) {
-      return element.offsetWidth;
-    }
-
-    const widthValue = parseFloat(getStyleValue(element, "width"));
-    if (!Number.isNaN(widthValue) && widthValue > 0) {
-      return widthValue;
-    }
-
-    if (typeof jq === "function") {
-      const wrapped = jq(element);
-      if (wrapped && typeof wrapped.width === "function") {
-        const width = wrapped.width();
-        if (typeof width === "number" && width > 0) {
-          return width;
-        }
-        const parsedWidth = parseFloat(width);
-        if (!Number.isNaN(parsedWidth) && parsedWidth > 0) {
-          return parsedWidth;
-        }
-      }
-    }
-
-    return 0;
-  };
-
-  const getParentWidth = (element) => {
-    if (!element) {
-      return 0;
-    }
-
-    if (isDomElement(element) && element.parentElement) {
-      const domParentWidth = Math.round(getElementWidth(element.parentElement));
-      if (domParentWidth > 0) {
-        return domParentWidth;
-      }
-    }
-
-    if (typeof jq === "function") {
-      const wrapped = jq(element);
-      if (wrapped && typeof wrapped.parent === "function") {
-        const parentWrapper = wrapped.parent();
-        if (parentWrapper) {
-          if (typeof parentWrapper.width === "function") {
-            const width = parentWrapper.width();
-            if (typeof width === "number" && width > 0) {
-              return Math.round(width);
-            }
-            const parsedWidth = parseFloat(width);
-            if (!Number.isNaN(parsedWidth) && parsedWidth > 0) {
-              return Math.round(parsedWidth);
-            }
-          }
-
-          if (parentWrapper[0]) {
-            const wrappedDomWidth = Math.round(getElementWidth(parentWrapper[0]));
-            if (wrappedDomWidth > 0) {
-              return wrappedDomWidth;
-            }
-          }
-        }
-      }
-    }
-
-    return 0;
-  };
-
-  const getBackgroundImage = (element) => {
-    const styleValue = getStyleValue(element, "background-image");
-    return typeof styleValue === "string" ? styleValue : "";
-  };
-
-  const setBackgroundImage = (element, value) => {
-    if (!element) {
-      return;
-    }
-
-    const useJq = typeof jq === "function";
-
-    if (element.style) {
-      element.style.backgroundImage = value;
-      if (useJq) {
-        const wrapped = jq(element);
-        if (wrapped && typeof wrapped.css === "function") {
-          wrapped.css("background-image", value);
-        }
-      }
-      return;
-    }
-
-    if (useJq) {
-      jq(element).css("background-image", value);
-    }
-  };
+  const jq = getJq();
 
   if (typeof jq !== "function") {
     return;
