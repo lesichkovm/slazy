@@ -83,23 +83,24 @@ function checkVisible(elementInstance) {
 }
 
 function loadLazyImage() {
-  // Requires JQuery
-  if (!window.$ && !window.jQuery) {
+  const jq = window.$ || window.jQuery;
+
+  if (typeof jq !== "function") {
     return;
   }
 
-  if ($("img[data-slazy-src]:not(.image-loaded)").length === 0) {
+  if (jq("img[data-slazy-src]:not(.image-loaded)").length === 0) {
     clearInterval(loadingLazyImages);
     return;
   }
 
-  $("img[data-slazy-src]:not(.image-loaded):not(.carousel_item_image)").each(
+  jq("img[data-slazy-src]:not(.image-loaded):not(.carousel_item_image)").each(
     function () {
-      const widthCss = $(this).css("width");
+      const widthCss = jq(this).css("width");
       let realWidth = widthCss.includes("%")
         ? 0
-        : parseInt($(this).width(), 10);
-      const parentWidth = parseInt($(this).parent().width(), 10) || 0;
+        : parseInt(jq(this).width(), 10);
+      const parentWidth = parseInt(jq(this).parent().width(), 10) || 0;
 
       if (realWidth === 0 && parentWidth > 0) {
         realWidth = parentWidth;
@@ -109,13 +110,13 @@ function loadLazyImage() {
         return;
       }
 
-      let url = $(this).data("slazy-src");
+      let url = jq(this).data("slazy-src");
 
       if (typeof url === "undefined") {
         return;
       }
 
-      const noResize = $(this).hasClass("no-resize");
+      const noResize = jq(this).hasClass("no-resize");
       if (noResize === false) {
         const resizedUrl = url.replace(/\d+x\d+/i, realWidth + "x0");
         url = resizedUrl;
@@ -127,28 +128,28 @@ function loadLazyImage() {
         return; //already processed
       }
 
-      if (typeof $(this).data("queue") !== "undefined") {
+      if (typeof jq(this).data("queue") !== "undefined") {
         return; //already processed
       }
 
       if (checkVisible(this)) {
-        $(this).data("queue", "loading");
+        jq(this).data("queue", "loading");
         var self = this;
         var newImg = new Image();
         newImg.onload = function () {
           self.src = this.src;
-          $(self).data("queue", "loaded");
+          jq(self).data("queue", "loaded");
           const widthValue = Number(
             this.width || this.naturalWidth || realWidth || 0
           );
           const heightValue = Number(
             this.height || this.naturalHeight || 0
           );
-          $(self).attr("width", widthValue);
-          $(self).attr("height", heightValue);
+          jq(self).attr("width", widthValue);
+          jq(self).attr("height", heightValue);
         };
         newImg.src = url;
-        $(this).addClass("image-loaded");
+        jq(this).addClass("image-loaded");
       }
     }
   );
