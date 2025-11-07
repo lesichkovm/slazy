@@ -62,6 +62,31 @@
         text-align: center;
       }
 
+      .gallery-grid {
+        display: grid;
+        gap: 1.5rem;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        padding: 0 1.5rem 1.5rem;
+      }
+
+      .gallery-card {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06);
+        overflow: hidden;
+      }
+
+      .gallery-card img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      .gallery-card figcaption {
+        padding: 1rem;
+        font-weight: 500;
+      }
+
       footer {
         text-align: center;
         padding: 1.5rem;
@@ -83,8 +108,8 @@
         </p>
         <div class="image-wrapper">
           <img
-            src="https://via.placeholder.com/16x9?text=Loading"
-            data-slazy-src="https://via.placeholder.com/1200x675?text=Loaded+Hero"
+            src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=320&h=180&q=40"
+            data-slazy-src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&h=900&q=80"
             alt="Lazy loaded hero"
           />
         </div>
@@ -98,10 +123,44 @@
         </p>
         <div
           class="feature-card"
-          style="background-image: url('https://via.placeholder.com/32x18/1f2933/ffffff?text=Loading');"
-          data-slazy-url="https://via.placeholder.com/960x540/2563eb/ffffff?text=Loaded+Background"
+          style="background-image: url('https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=320&h=180&q=35');"
+          data-slazy-url="https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1600&h=900&q=80"
         >
           Loaded on demand
+        </div>
+      </section>
+
+      <section>
+        <h2>Gallery of lazy-loaded images</h2>
+        <p>
+          Each photo starts with a small Unsplash preview and swaps to a high-resolution version as soon as it
+          scrolls into view.
+        </p>
+        <div class="gallery-grid">
+          <figure class="gallery-card">
+            <img
+              src="https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=320&h=200&q=35"
+              data-slazy-src="https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1600&h=1000&q=80"
+              alt="Misty forest trail"
+            />
+            <figcaption>Morning fog over the pines</figcaption>
+          </figure>
+          <figure class="gallery-card">
+            <img
+              src="https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&w=320&h=200&q=35"
+              data-slazy-src="https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&w=1600&h=1000&q=80"
+              alt="City skyline at dusk"
+            />
+            <figcaption>City lights at golden hour</figcaption>
+          </figure>
+          <figure class="gallery-card">
+            <img
+              src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=320&h=200&q=35"
+              data-slazy-src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&h=1000&q=80"
+              alt="Ocean waves at sunset"
+            />
+            <figcaption>Waves meeting the sunset</figcaption>
+          </figure>
         </div>
       </section>
 
@@ -115,8 +174,8 @@
         <div class="image-wrapper carousel_item" aria-hidden="true">
           <img
             class="carousel_item_image"
-            src="https://via.placeholder.com/32x18?text=Hidden"
-            data-slazy-src="https://via.placeholder.com/800x450?text=Active+Slide"
+            src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=320&h=180&q=35"
+            data-slazy-src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1280&h=720&q=80"
             alt="Carousel slide"
           />
         </div>
@@ -124,7 +183,10 @@
     </main>
 
     <footer>
-      <small>Open the browser console to watch Slazy update attributes as you scroll.</small>
+      <small>
+        Open the browser console to watch Slazy update attributes as you scroll. Photos by Unsplash
+        creators.
+      </small>
     </footer>
 
     <script src="../slazy.js"></script>
