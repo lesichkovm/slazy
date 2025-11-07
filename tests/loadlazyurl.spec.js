@@ -2,36 +2,85 @@ describe('loadLazyUrl', function() {
     let mockElement;
     let originalSetInterval;
     let originalClearInterval;
+    let selectorHandlers;
+    let elementWrappers;
+    let setSelectorHandler;
+    let registerElementWrapper;
+
+    function createElementWrapper(overrides = {}) {
+        const dataStore = Object.assign({ 'slazy-url': 'background.jpg' }, overrides.initialData);
+        const styleStore = Object.assign({ 'background-image': 'url(placeholder.jpg)', width: '100px' }, overrides.initialStyles);
+
+        const dataSpy = jasmine.createSpy('data').and.callFake(function(key, value) {
+            if (typeof value !== 'undefined') {
+                dataStore[key] = value;
+                return value;
+            }
+            return dataStore[key];
+        });
+
+        const cssSpy = jasmine.createSpy('css').and.callFake(function(property, value) {
+            if (typeof value !== 'undefined') {
+                styleStore[property] = value;
+                return value;
+            }
+            return styleStore[property];
+        });
+
+        return Object.assign(
+            {
+                css: cssSpy,
+                width: jasmine.createSpy('width').and.returnValue(100),
+                parent: jasmine.createSpy('parent').and.returnValue({
+                    width: jasmine.createSpy('width').and.returnValue(200)
+                }),
+                data: dataSpy,
+                hasClass: jasmine.createSpy('hasClass').and.returnValue(false),
+                addClass: jasmine.createSpy('addClass')
+            },
+            overrides.overrides
+        );
+    }
 
     beforeEach(function() {
         // Mock jQuery
+        selectorHandlers = {};
+        elementWrappers = new Map();
+
+        setSelectorHandler = function(selector, factory) {
+            selectorHandlers[selector] = factory;
+        };
+
+        registerElementWrapper = function(element, options = {}) {
+            const wrapper = createElementWrapper(options);
+            elementWrappers.set(element, wrapper);
+            return wrapper;
+        };
+
         window.$ = jasmine.createSpy('$').and.callFake(function(selector) {
             if (typeof selector === 'string') {
-                // Selector queries
-                if (selector === '*[data-slazy-url]:not(.image-loaded):not(.carousel_item_image)') {
-                    return {
-                        each: jasmine.createSpy('each').and.callFake(function(callback) {
-                            // Mock no elements found by default
-                        })
-                    };
+                if (selectorHandlers[selector]) {
+                    return selectorHandlers[selector]();
                 }
+
                 if (selector === '*[data-slazy-url]:not(.image-loaded)') {
                     return { length: 0 };
                 }
-            } else if (typeof selector === 'object') {
-                // Element wrapping
-                return {
-                    css: jasmine.createSpy('css').and.returnValue('100px'),
-                    width: jasmine.createSpy('width').and.returnValue(100),
-                    parent: jasmine.createSpy('parent').and.returnValue({
-                        width: jasmine.createSpy('width').and.returnValue(200)
-                    }),
-                    data: jasmine.createSpy('data').and.returnValue('background.jpg'),
-                    hasClass: jasmine.createSpy('hasClass').and.returnValue(false),
-                    addClass: jasmine.createSpy('addClass')
-                };
+
+                if (selector === '*[data-slazy-url]:not(.image-loaded):not(.carousel_item_image)') {
+                    return {
+                        each: jasmine.createSpy('each').and.callFake(function() {})
+                    };
+                }
+
+                return jasmine.createSpyObj('$', ['each', 'length']);
             }
-            return jasmine.createSpyObj('$', ['each', 'length', 'css', 'width', 'parent', 'data', 'hasClass', 'addClass']);
+
+            if (elementWrappers.has(selector)) {
+                return elementWrappers.get(selector);
+            }
+
+            return registerElementWrapper(selector);
         });
 
         // Mock checkVisible
@@ -60,39 +109,42 @@ describe('loadLazyUrl', function() {
     });
 
     it('should skip elements without real width', function() {
-        window.$(jasmine.any(String)).and.callFake(function(selector) {
-            if (selector === '*[data-slazy-url]:not(.image-loaded):not(.carousel_item_image)') {
-                return {
-                    each: function(callback) {
-                        callback.call({}); // Mock element with no width
-                    }
-                };
-            }
-            return jasmine.createSpyObj('$', ['css', 'width']);
+        setSelectorHandler('*[data-slazy-url]:not(.image-loaded)', function() {
+            return { length: 1 };
         });
 
-        const $el = window.$({});
-        $el.css.and.returnValue('100%'); // Percentage width
-        $el.width.and.returnValue(0);
+        setSelectorHandler('*[data-slazy-url]:not(.image-loaded):not(.carousel_item_image)', function() {
+            return {
+                each: function(callback) {
+                    const element = {};
+                    const wrapper = registerElementWrapper(element);
+                    wrapper.css.and.returnValue('100%');
+                    wrapper.width.and.returnValue(0);
+                    callback.call(element);
+                }
+            };
+        });
 
         loadLazyUrl();
     });
 
     it('should load visible background images', function() {
         let processed = false;
-        window.$(jasmine.any(String)).and.callFake(function(selector) {
-            if (selector === '*[data-slazy-url]:not(.image-loaded):not(.carousel_item_image)') {
-                return {
-                    each: function(callback) {
-                        const mockEl = {
-                            style: {}
-                        };
-                        callback.call(mockEl);
-                        processed = true;
-                    }
-                };
-            }
-            return jasmine.createSpyObj('$', ['css', 'width', 'parent', 'data', 'hasClass', 'addClass']);
+        setSelectorHandler('*[data-slazy-url]:not(.image-loaded)', function() {
+            return { length: 1 };
+        });
+
+        setSelectorHandler('*[data-slazy-url]:not(.image-loaded):not(.carousel_item_image)', function() {
+            return {
+                each: function(callback) {
+                    const element = {
+                        style: {}
+                    };
+                    registerElementWrapper(element);
+                    callback.call(element);
+                    processed = true;
+                }
+            };
         });
 
         loadLazyUrl();
@@ -100,75 +152,80 @@ describe('loadLazyUrl', function() {
     });
 
     it('should resize URLs when no-resize class is not present', function() {
-        window.$(jasmine.any(String)).and.callFake(function(selector) {
-            if (selector === '*[data-slazy-url]:not(.image-loaded):not(.carousel_item_image)') {
-                return {
-                    each: function(callback) {
-                        const mockEl = {
-                            style: {}
-                        };
-                        callback.call(mockEl);
-                    }
-                };
-            }
-            return jasmine.createSpyObj('$', ['css', 'width', 'parent', 'data', 'hasClass', 'addClass']);
+        setSelectorHandler('*[data-slazy-url]:not(.image-loaded)', function() {
+            return { length: 1 };
         });
 
-        const $el = window.$({});
-        $el.data.and.returnValue('background-640x480.jpg');
-        $el.hasClass.and.returnValue(false); // not no-resize
+        let wrapper;
+        setSelectorHandler('*[data-slazy-url]:not(.image-loaded):not(.carousel_item_image)', function() {
+            return {
+                each: function(callback) {
+                    const element = {
+                        style: {}
+                    };
+                    wrapper = registerElementWrapper(element);
+                    wrapper.data('slazy-url', 'background-640x480.jpg');
+                    wrapper.hasClass.and.returnValue(false);
+                    callback.call(element);
+                }
+            };
+        });
 
         loadLazyUrl();
 
-        expect($el.css).toHaveBeenCalledWith('background-image', 'url(background-100x0.jpg)');
+        expect(wrapper.css).toHaveBeenCalledWith('background-image', 'url(background-100x0.jpg)');
     });
 
     it('should not resize URLs when no-resize class is present', function() {
-        window.$(jasmine.any(String)).and.callFake(function(selector) {
-            if (selector === '*[data-slazy-url]:not(.image-loaded):not(.carousel_item_image)') {
-                return {
-                    each: function(callback) {
-                        const mockEl = {
-                            style: {}
-                        };
-                        callback.call(mockEl);
-                    }
-                };
-            }
-            return jasmine.createSpyObj('$', ['css', 'width', 'parent', 'data', 'hasClass', 'addClass']);
+        setSelectorHandler('*[data-slazy-url]:not(.image-loaded)', function() {
+            return { length: 1 };
         });
 
-        const $el = window.$({});
-        $el.data.and.returnValue('background-640x480.jpg');
-        $el.hasClass.and.returnValue(true); // no-resize
+        setSelectorHandler('*[data-slazy-url]:not(.image-loaded):not(.carousel_item_image)', function() {
+            return {
+                each: function(callback) {
+                    const element = {
+                        style: {}
+                    };
+                    const wrapper = registerElementWrapper(element);
+                    wrapper.data('slazy-url', 'background-640x480.jpg');
+                    wrapper.hasClass.and.returnValue(true);
+                    callback.call(element);
+                }
+            };
+        });
 
         loadLazyUrl();
 
-        expect($el.css).toHaveBeenCalledWith('background-image', 'url(background-640x480.jpg)');
+        const element = Array.from(elementWrappers.keys())[0];
+        const elementWrapper = elementWrappers.get(element);
+        expect(elementWrapper.css).toHaveBeenCalledWith('background-image', 'url(background-640x480.jpg)');
     });
 
     it('should skip already processed elements', function() {
-        window.$(jasmine.any(String)).and.callFake(function(selector) {
-            if (selector === '*[data-slazy-url]:not(.image-loaded):not(.carousel_item_image)') {
-                return {
-                    each: function(callback) {
-                        const mockEl = {
-                            style: {
-                                backgroundImage: 'url(already-loaded.jpg)'
-                            }
-                        };
-                        callback.call(mockEl);
-                    }
-                };
-            }
-            return jasmine.createSpyObj('$', ['css']);
+        setSelectorHandler('*[data-slazy-url]:not(.image-loaded)', function() {
+            return { length: 1 };
         });
 
-        const $el = window.$({});
-        $el.css.and.returnValue('url(already-loaded.jpg)'); // Already has background
+        setSelectorHandler('*[data-slazy-url]:not(.image-loaded):not(.carousel_item_image)', function() {
+            return {
+                each: function(callback) {
+                    const element = {
+                        style: {
+                            backgroundImage: 'url(already-loaded.jpg)'
+                        }
+                    };
+                    const wrapper = registerElementWrapper(element);
+                    wrapper.css.and.returnValue('url(already-loaded.jpg)');
+                    callback.call(element);
+                }
+            };
+        });
 
         loadLazyUrl();
 
-        expect($el.css).not.toHaveBeenCalledWith('background-image', jasmine.any(String));
+        const element = Array.from(elementWrappers.keys())[0];
+        const wrapper = elementWrappers.get(element);
+        expect(wrapper.css).not.toHaveBeenCalledWith('background-image', jasmine.any(String));
     });
 });
