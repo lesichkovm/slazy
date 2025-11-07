@@ -7,6 +7,10 @@
 })(typeof globalThis !== "undefined" ? globalThis : typeof self !== "undefined" ? self : this, function () {
   "use strict";
 
+  /**
+   * Internal scheduler state shared by the polling helpers.
+   * @type {{ pollDelay: number, imageInterval: ReturnType<typeof setInterval> | null, urlInterval: ReturnType<typeof setInterval> | null }}
+   */
   const state = {
     pollDelay: 1000,
     imageInterval: null,
@@ -15,6 +19,10 @@
 
   const api = {};
 
+  /**
+   * Clears the active interval responsible for image polling, if any.
+   * Ensures repeated calls are safe when no timer is scheduled.
+   */
   function stopImageTimer() {
     if (state.imageInterval != null && typeof clearInterval === "function") {
       clearInterval(state.imageInterval);
@@ -22,6 +30,10 @@
     state.imageInterval = null;
   }
 
+  /**
+   * Clears the active interval responsible for background URL polling, if any.
+   * Designed to be idempotent to simplify teardown.
+   */
   function stopUrlTimer() {
     if (state.urlInterval != null && typeof clearInterval === "function") {
       clearInterval(state.urlInterval);
@@ -29,33 +41,58 @@
     state.urlInterval = null;
   }
 
+  /**
+   * Schedules the polling loop that upgrades <img> elements when they become visible.
+   * A timer is only created when one is not already running.
+   */
   function ensureImageTimer() {
     if (state.imageInterval == null && typeof setInterval === "function") {
       state.imageInterval = setInterval(api.loadLazyImage, state.pollDelay);
     }
   }
 
+  /**
+   * Schedules the polling loop that upgrades background images when they become visible.
+   * Avoids duplicate timers by checking for an existing handle first.
+   */
   function ensureUrlTimer() {
     if (state.urlInterval == null && typeof setInterval === "function") {
       state.urlInterval = setInterval(api.loadLazyUrl, state.pollDelay);
     }
   }
 
+  /**
+   * Starts both image and background polling loops, creating timers as needed.
+   */
   function startPolling() {
     ensureImageTimer();
     ensureUrlTimer();
   }
 
+  /**
+   * Stops all active polling loops and clears their interval handles.
+   */
   function stopPolling() {
     stopImageTimer();
     stopUrlTimer();
   }
 
+  /**
+   * Restarts polling by fully stopping and then re-starting all timers.
+   * Useful when external code changes the polling cadence or needs a reset.
+   */
   function restartPolling() {
     stopPolling();
     startPolling();
   }
 
+  /**
+   * Determines whether an element should be considered visible for lazy loading purposes.
+   * Handles carousel scenarios where ancestors manage visibility via ARIA attributes.
+   *
+   * @param {Element} elementInstance - The DOM element to inspect.
+   * @returns {boolean} True when the element is visible enough to load assets.
+   */
   api.checkVisible = function checkVisible(elementInstance) {
     const element = elementInstance;
 
@@ -114,10 +151,23 @@
     return rect.bottom >= 0 && rect.top < viewportHeight;
   };
 
+  /**
+   * Converts kebab-case data keys into their dataset camelCase counterpart.
+   *
+   * @param {string} key - The kebab-case attribute suffix (e.g. "slazy-src").
+   * @returns {string} The camelCase version used by `element.dataset`.
+   */
   function dataKeyToDatasetKey(key) {
     return key.replace(/-([a-z])/g, (_, char) => char.toUpperCase());
   }
 
+  /**
+   * Reads a `data-*` attribute from an element, falling back to the dataset API when available.
+   *
+   * @param {Element} element - The target DOM node.
+   * @param {string} key - Attribute key without the `data-` prefix.
+   * @returns {string|undefined} The stored value, or undefined when absent.
+   */
   function getData(element, key) {
     if (!element) {
       return undefined;
@@ -142,6 +192,13 @@
     return undefined;
   }
 
+  /**
+   * Stores a `data-*` attribute value using either `setAttribute` or the dataset API.
+   *
+   * @param {Element} element - The target DOM node.
+   * @param {string} key - Attribute key without the `data-` prefix.
+   * @param {string} value - Value to persist.
+   */
   function setData(element, key, value) {
     if (!element) {
       return;
@@ -160,6 +217,13 @@
     }
   }
 
+  /**
+   * Checks whether an element has a CSS class using either `classList` or legacy fallbacks.
+   *
+   * @param {Element} element - The element to inspect.
+   * @param {string} className - Class token to look up.
+   * @returns {boolean} True if the class is present.
+   */
   function hasClass(element, className) {
     if (element && element.classList && typeof element.classList.contains === "function") {
       return element.classList.contains(className);
@@ -173,6 +237,12 @@
     return false;
   }
 
+  /**
+   * Adds a CSS class to an element, supporting both `classList` and string fallbacks.
+   *
+   * @param {Element} element - The element to mutate.
+   * @param {string} className - Class token to append.
+   */
   function addClass(element, className) {
     if (element && element.classList && typeof element.classList.add === "function") {
       element.classList.add(className);
@@ -189,10 +259,23 @@
     }
   }
 
+  /**
+   * Determines whether a value is a DOM Element node.
+   *
+   * @param {*} value - Candidate value.
+   * @returns {value is Element} True when the value is an element node.
+   */
   function isDomElement(value) {
     return value && typeof value === "object" && value.nodeType === 1;
   }
 
+  /**
+   * Normalises asset URLs so width-oriented services receive the target element width.
+   *
+   * @param {string} originalUrl - Original image/background URL.
+   * @param {number} width - Effective element width in pixels.
+   * @returns {string} Resized URL or the original when no changes are required.
+   */
   function resizeUrlForWidth(originalUrl, width) {
     if (!originalUrl || width <= 0) {
       return originalUrl;
@@ -224,6 +307,13 @@
     return url;
   }
 
+  /**
+   * Retrieves a style value from inline styles or computed styles.
+   *
+   * @param {Element} element - Element to read from.
+   * @param {string} property - CSS property name.
+   * @returns {string} The property value or an empty string when unavailable.
+   */
   function getStyleValue(element, property) {
     if (!element) {
       return "";
@@ -250,6 +340,12 @@
     return "";
   }
 
+  /**
+   * Determines the rendered width for an element using geometry or computed styles.
+   *
+   * @param {Element} element - Element whose width will be measured.
+   * @returns {number} Width in pixels, or 0 when it cannot be resolved.
+   */
   function getElementWidth(element) {
     if (!element) {
       return 0;
@@ -274,6 +370,12 @@
     return 0;
   }
 
+  /**
+   * Attempts to derive the width of an element's parent for percentage-based layouts.
+   *
+   * @param {Element} element - Reference element whose parent width is needed.
+   * @returns {number} Parent width in pixels, or 0 when unknown.
+   */
   function getParentWidth(element) {
     if (!element) {
       return 0;
@@ -289,11 +391,23 @@
     return 0;
   }
 
+  /**
+   * Reads the current background-image value for an element.
+   *
+   * @param {Element} element - Element whose background should be inspected.
+   * @returns {string} The background-image string (possibly empty).
+   */
   function getBackgroundImage(element) {
     const styleValue = getStyleValue(element, "background-image");
     return typeof styleValue === "string" ? styleValue : "";
   }
 
+  /**
+   * Updates the background-image on an element, preserving unrelated inline styles.
+   *
+   * @param {Element} element - Element to mutate.
+   * @param {string} value - New CSS background-image value (e.g. `url(...)`).
+   */
   function setBackgroundImage(element, value) {
     if (!element) {
       return;
@@ -313,6 +427,12 @@
     }
   }
 
+  /**
+   * Indicates whether any elements in the document match the given selector.
+   *
+   * @param {string} selector - CSS selector to evaluate.
+   * @returns {boolean} True when at least one element matches.
+   */
   function hasMatchingElements(selector) {
     if (typeof document === "undefined" || typeof document.querySelectorAll !== "function") {
       return false;
@@ -322,6 +442,12 @@
     return Boolean(domMatches && domMatches.length > 0);
   }
 
+  /**
+   * Iterates synchronously over all elements that satisfy the selector and invokes a callback.
+   *
+   * @param {string} selector - CSS selector identifying elements to process.
+   * @param {(element: Element) => void} iterator - Function executed for each match.
+   */
   function forEachMatchingElement(selector, iterator) {
     if (typeof document === "undefined" || typeof document.querySelectorAll !== "function") {
       return;
@@ -337,6 +463,10 @@
     });
   }
 
+  /**
+   * Polling task that promotes `<img data-slazy-src>` elements to their real source URLs.
+   * Applies responsive URL rewrites, prevents duplicate work, and tracks load state.
+   */
   api.loadLazyImage = function loadLazyImage() {
     const hasLazyImages = hasMatchingElements("img[data-slazy-src]:not(.image-loaded)");
 
@@ -413,6 +543,10 @@
     );
   };
 
+  /**
+   * Polling task that upgrades `data-slazy-url` background images when elements are visible.
+   * Mirrors the image loader behaviour, including responsive URL adjustments and guards.
+   */
   api.loadLazyUrl = function loadLazyUrl() {
     const hasLazyUrls = hasMatchingElements("*[data-slazy-url]:not(.image-loaded)");
 
@@ -483,6 +617,9 @@
   api.stop = stopPolling;
   api.restart = restartPolling;
 
+  /**
+   * Exposes test-friendly hooks that support white-box assertions without public reliance.
+   */
   api._internals = {
     get imageInterval() {
       return state.imageInterval;
