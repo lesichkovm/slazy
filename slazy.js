@@ -552,7 +552,13 @@ function loadLazyUrl() {
 
       // DEBUG:  console.log('URL to process:' + url);
 
-      if (getBackgroundImage(element) === "url(" + url + ")") {
+      const currentBackground = getBackgroundImage(element);
+      const normalizedBackground = currentBackground.replace(
+        /^url\(("|')?(.*?)\1\)$/i,
+        "$2"
+      );
+
+      if (normalizedBackground === url || currentBackground === "url(" + url + ")") {
         return; //already processed
       }
 
