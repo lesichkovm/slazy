@@ -317,21 +317,119 @@ function setBackgroundImage(element, value) {
   }
 }
 
-function loadLazyImage() {
-  const jq = getJq();
+function hasMatchingElements(selector) {
+  if (
+    typeof document !== "undefined" &&
+    typeof document.querySelectorAll === "function"
+  ) {
+    const domMatches = document.querySelectorAll(selector);
+    if (domMatches && domMatches.length > 0) {
+      return true;
+    }
+  }
 
-  if (typeof jq !== "function") {
+  const jq = getJq();
+  if (!jq) {
+    return false;
+  }
+
+  const collection = jq(selector);
+  if (!collection) {
+    return false;
+  }
+
+  if (typeof collection.length === "number") {
+    return collection.length > 0;
+  }
+
+  if (typeof collection.toArray === "function") {
+    return collection.toArray().length > 0;
+  }
+
+  if (typeof collection.each === "function") {
+    let found = false;
+    collection.each(function () {
+      found = true;
+      return false;
+    });
+    return found;
+  }
+
+  return false;
+}
+
+function forEachMatchingElement(selector, iterator) {
+  let handled = false;
+
+  if (
+    typeof document !== "undefined" &&
+    typeof document.querySelectorAll === "function"
+  ) {
+    const domMatches = document.querySelectorAll(selector);
+    if (domMatches && domMatches.length > 0) {
+      handled = true;
+      domMatches.forEach(function (element) {
+        iterator(element);
+      });
+    }
+  }
+
+  if (handled) {
     return;
   }
 
-  if (jq("img[data-slazy-src]:not(.image-loaded)").length === 0) {
+  const jq = getJq();
+  if (!jq) {
+    return;
+  }
+
+  const collection = jq(selector);
+  if (!collection) {
+    return;
+  }
+
+  if (typeof collection.each === "function") {
+    collection.each(function (_index, element) {
+      const target = element || this;
+      if (target) {
+        iterator(target);
+      }
+    });
+    return;
+  }
+
+  if (typeof collection.length === "number") {
+    for (let i = 0; i < collection.length; i += 1) {
+      const item = collection[i];
+      if (item) {
+        iterator(item);
+      }
+    }
+  }
+}
+
+function loadLazyImage() {
+  const jq = getJq();
+
+  const hasLazyImages = hasMatchingElements("img[data-slazy-src]:not(.image-loaded)");
+
+  if (typeof jq !== "function" && !hasLazyImages) {
+    return;
+  }
+
+  if (!hasLazyImages) {
     clearInterval(loadingLazyImages);
     return;
   }
 
-  jq("img[data-slazy-src]:not(.image-loaded):not(.carousel_item_image)").each(
-    function () {
-      const element = this;
+  forEachMatchingElement(
+    "img[data-slazy-src]:not(.image-loaded):not(.carousel_item_image)",
+    function (elementArg) {
+      const element = elementArg || this;
+      if (!element) {
+        return;
+      }
+
       const widthCss = getStyleValue(element, "width");
       let realWidth = widthCss.includes("%")
         ? 0
@@ -385,15 +483,14 @@ function loadLazyImage() {
             self.setAttribute("width", widthValue);
             self.setAttribute("height", heightValue);
           } else {
-            const jqSelf = getJq();
-            if (jqSelf) {
-              jqSelf(self).attr("width", widthValue);
-              jqSelf(self).attr("height", heightValue);
+            if (jq) {
+              jq(self).attr("width", widthValue);
+              jq(self).attr("height", heightValue);
             }
           }
-          addClass(self, "image-loaded");
         };
         newImg.src = url;
+        addClass(element, "image-loaded");
       }
     }
   );
@@ -402,20 +499,21 @@ function loadLazyImage() {
 let loadingLazyImages = setInterval(loadLazyImage, 1000);
 
 function loadLazyUrl() {
-  const jq = getJq();
+  const hasLazyUrls = hasMatchingElements("*[data-slazy-url]:not(.image-loaded)");
 
-  if (typeof jq !== "function") {
-    return;
-  }
-
-  if (jq("*[data-slazy-url]:not(.image-loaded)").length === 0) {
+  if (!hasLazyUrls) {
     clearInterval(loadingLazyUrl);
     return;
   }
 
-  jq("*[data-slazy-url]:not(.image-loaded):not(.carousel_item_image)").each(
-    function () {
-      const element = this;
+  forEachMatchingElement(
+    "*[data-slazy-url]:not(.image-loaded):not(.carousel_item_image)",
+    function (elementArg) {
+      const element = elementArg || this;
+      if (!element) {
+        return;
+      }
+
       const widthCss = getStyleValue(element, "width");
       let realWidth = widthCss.includes("%")
         ? 0
