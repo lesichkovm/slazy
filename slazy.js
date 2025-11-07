@@ -1,14 +1,4 @@
-function getJq() {
-  if (typeof window === "undefined") {
-    return null;
-  }
-  const jq = window.$ || window.jQuery;
-  return typeof jq === "function" ? jq : null;
-}
-
 function checkVisible(elementInstance) {
-  const jq = getJq();
-  const $element = jq ? jq(elementInstance) : null;
   const element = elementInstance;
 
   const isHidden = (value) => {
@@ -20,12 +10,10 @@ function checkVisible(elementInstance) {
   };
 
   const hasCarouselImageClass = Boolean(
-    (element &&
+    element &&
       element.classList &&
       typeof element.classList.contains === "function" &&
-      element.classList.contains("carousel_item_image")) ||
-      ($element && typeof $element.hasClass === "function" &&
-        $element.hasClass("carousel_item_image"))
+      element.classList.contains("carousel_item_image")
   );
 
   const getClosestHiddenState = (target, selector) => {
@@ -41,23 +29,11 @@ function checkVisible(elementInstance) {
 
   if (hasCarouselImageClass) {
     let carouselHidden = getClosestHiddenState(element, ".carousel_item");
-    if (carouselHidden == null && $element && typeof $element.closest === "function") {
-      const carouselItem = $element.closest(".carousel_item");
-      if (carouselItem && typeof carouselItem.attr === "function") {
-        carouselHidden = carouselItem.attr("aria-hidden");
-      }
-    }
     if (isHidden(carouselHidden)) {
       return false;
     }
 
     let splideHidden = getClosestHiddenState(element, "div.splide__slide");
-    if (splideHidden == null && $element && typeof $element.closest === "function") {
-      const splideSlide = $element.closest("div.splide__slide");
-      if (splideSlide && typeof splideSlide.attr === "function") {
-        splideHidden = splideSlide.attr("aria-hidden");
-      }
-    }
     if (isHidden(splideHidden)) {
       return false;
     }
@@ -105,14 +81,6 @@ function getData(element, key) {
     }
   }
 
-  const jq = getJq();
-  if (jq) {
-    const wrapped = jq(element);
-    if (wrapped && typeof wrapped.data === "function") {
-      return wrapped.data(key);
-    }
-  }
-
   return undefined;
 }
 
@@ -134,13 +102,6 @@ function setData(element, key, value) {
     return;
   }
 
-  const jq = getJq();
-  if (jq) {
-    const wrapped = jq(element);
-    if (wrapped && typeof wrapped.data === "function") {
-      wrapped.data(key, value);
-    }
-  }
 }
 
 function hasClass(element, className) {
@@ -148,12 +109,9 @@ function hasClass(element, className) {
     return element.classList.contains(className);
   }
 
-  const jq = getJq();
-  if (jq) {
-    const wrapped = jq(element);
-    if (wrapped && typeof wrapped.hasClass === "function") {
-      return wrapped.hasClass(className);
-    }
+  if (element && typeof element.className === "string") {
+    const classNames = element.className.split(/\s+/);
+    return classNames.indexOf(className) !== -1;
   }
 
   return false;
@@ -165,11 +123,12 @@ function addClass(element, className) {
     return;
   }
 
-  const jq = getJq();
-  if (jq) {
-    const wrapped = jq(element);
-    if (wrapped && typeof wrapped.addClass === "function") {
-      wrapped.addClass(className);
+  if (element) {
+    const existing = typeof element.className === "string" ? element.className : "";
+    const classes = existing.split(/\s+/).filter(Boolean);
+    if (classes.indexOf(className) === -1) {
+      classes.push(className);
+      element.className = classes.join(" ");
     }
   }
 }
@@ -201,17 +160,6 @@ function getStyleValue(element, property) {
     }
   }
 
-  const jq = getJq();
-  if (jq) {
-    const wrapped = jq(element);
-    if (wrapped && typeof wrapped.css === "function") {
-      const fallback = wrapped.css(property);
-      if (typeof fallback === "string") {
-        return fallback;
-      }
-    }
-  }
-
   return "";
 }
 
@@ -236,21 +184,6 @@ function getElementWidth(element) {
     return widthValue;
   }
 
-  const jq = getJq();
-  if (jq) {
-    const wrapped = jq(element);
-    if (wrapped && typeof wrapped.width === "function") {
-      const width = wrapped.width();
-      if (typeof width === "number" && width > 0) {
-        return width;
-      }
-      const parsedWidth = typeof width === "string" ? parseFloat(width) : NaN;
-      if (!Number.isNaN(parsedWidth) && parsedWidth > 0) {
-        return parsedWidth;
-      }
-    }
-  }
-
   return 0;
 }
 
@@ -263,33 +196,6 @@ function getParentWidth(element) {
     const domParentWidth = Math.round(getElementWidth(element.parentElement));
     if (domParentWidth > 0) {
       return domParentWidth;
-    }
-  }
-
-  const jq = getJq();
-  if (jq) {
-    const wrapped = jq(element);
-    if (wrapped && typeof wrapped.parent === "function") {
-      const parentWrapper = wrapped.parent();
-      if (parentWrapper) {
-        if (typeof parentWrapper.width === "function") {
-          const width = parentWrapper.width();
-          if (typeof width === "number" && width > 0) {
-            return Math.round(width);
-          }
-          const parsedWidth = typeof width === "string" ? parseFloat(width) : NaN;
-          if (!Number.isNaN(parsedWidth) && parsedWidth > 0) {
-            return Math.round(parsedWidth);
-          }
-        }
-
-        if (parentWrapper[0]) {
-          const wrappedDomWidth = Math.round(getElementWidth(parentWrapper[0]));
-          if (wrappedDomWidth > 0) {
-            return wrappedDomWidth;
-          }
-        }
-      }
     }
   }
 
@@ -308,13 +214,6 @@ function setBackgroundImage(element, value) {
 
   if (element.style) {
     element.style.backgroundImage = value;
-    const jq = getJq();
-    if (jq) {
-      const wrapped = jq(element);
-      if (wrapped && typeof wrapped.css === "function") {
-        wrapped.css("background-image", value);
-      }
-    }
   } else if (typeof element.setAttribute === "function") {
     const existingStyle = element.getAttribute("style") || "";
     const sanitized = existingStyle
@@ -324,100 +223,31 @@ function setBackgroundImage(element, value) {
       .filter((part) => !part.startsWith("background-image"));
     sanitized.push(`background-image: ${value}`);
     element.setAttribute("style", sanitized.join("; "));
-  } else {
-    const jq = getJq();
-    if (jq) {
-      const wrapped = jq(element);
-      if (wrapped && typeof wrapped.css === "function") {
-        wrapped.css("background-image", value);
-      }
-    }
   }
 }
 
 function hasMatchingElements(selector) {
-  if (typeof document !== "undefined" && typeof document.querySelectorAll === "function") {
-    const domMatches = document.querySelectorAll(selector);
-    if (domMatches && domMatches.length > 0) {
-      return true;
-    }
-  }
-
-  const jq = getJq();
-  if (!jq) {
+  if (typeof document === "undefined" || typeof document.querySelectorAll !== "function") {
     return false;
   }
 
-  const collection = jq(selector);
-  if (!collection) {
-    return false;
-  }
-
-  if (typeof collection.length === "number") {
-    return collection.length > 0;
-  }
-
-  if (typeof collection.toArray === "function") {
-    return collection.toArray().length > 0;
-  }
-
-  if (typeof collection.each === "function") {
-    let found = false;
-    collection.each(function () {
-      found = true;
-      return false;
-    });
-    return found;
-  }
-
-  return false;
+  const domMatches = document.querySelectorAll(selector);
+  return Boolean(domMatches && domMatches.length > 0);
 }
 
 function forEachMatchingElement(selector, iterator) {
-  let handled = false;
-
-  if (typeof document !== "undefined" && typeof document.querySelectorAll === "function") {
-    const domMatches = document.querySelectorAll(selector);
-    if (domMatches && domMatches.length > 0) {
-      handled = true;
-      domMatches.forEach(function (element) {
-        iterator(element);
-      });
-    }
-  }
-
-  if (handled) {
+  if (typeof document === "undefined" || typeof document.querySelectorAll !== "function") {
     return;
   }
 
-  const jq = getJq();
-  if (!jq) {
+  const domMatches = document.querySelectorAll(selector);
+  if (!domMatches || domMatches.length === 0) {
     return;
   }
 
-  const collection = jq(selector);
-  if (!collection) {
-    return;
-  }
-
-  if (typeof collection.each === "function") {
-    collection.each(function (_index, element) {
-      const target = element || this;
-      if (target) {
-        iterator(target);
-      }
-    });
-    return;
-  }
-
-  if (typeof collection.length === "number") {
-    for (let i = 0; i < collection.length; i += 1) {
-      const item = collection[i];
-      if (item) {
-        iterator(item);
-      }
-    }
-  }
+  domMatches.forEach(function (element) {
+    iterator(element);
+  });
 }
 
 function loadLazyImage() {
@@ -489,14 +319,8 @@ function loadLazyImage() {
             self.setAttribute("width", widthValue);
             self.setAttribute("height", heightValue);
           } else {
-            const jq = getJq();
-            if (jq) {
-              const wrapped = jq(self);
-              if (wrapped && typeof wrapped.attr === "function") {
-                wrapped.attr("width", widthValue);
-                wrapped.attr("height", heightValue);
-              }
-            }
+            self.width = widthValue;
+            self.height = heightValue;
           }
         };
         newImg.src = url;
