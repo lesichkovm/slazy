@@ -11,7 +11,7 @@ Slazy provides a lightweight helper for progressively loading images and backgro
 - Detects when an element becomes visible in the viewport, including special handling for Slick/Splide carousels that hide slides with `aria-hidden`.
 - Upgrades `<img>` tags from a lightweight placeholder (`src`) to the full asset stored in `data-slazy-src` once visible.
 - Replaces background images stored in `data-slazy-url` while optionally resizing the URL to match the element width.
-- Avoids redundant work by tracking queued and completed elements via `data-queue` and the `.image-loaded` marker class.
+- Avoids redundant work by tracking queued and completed elements via `data-queue` and the `.slazy-image-loaded` marker class.
 
 ## Installation
 
@@ -48,7 +48,7 @@ Download `slazy.js`, drop it into your project, and import it from your bundle e
 ></div>
 ```
 
-Add `data-slazy-src` (for `<img>`) or `data-slazy-url` (for any element with a background) and include `slazy.js`. Slazy polls the DOM every second, and the first time an element is visible it swaps the placeholder with the real asset and marks the node with `.image-loaded`.
+Add `data-slazy-src` (for `<img>`) or `data-slazy-url` (for any element with a background) and include `slazy.js`. Slazy polls the DOM every second, and the first time an element is visible it swaps the placeholder with the real asset and marks the node with `.slazy-image-loaded`.
 
 ## Resizing behaviour
 
@@ -59,20 +59,20 @@ When Slazy upgrades an asset it optionally rewrites any `WxH` token in the URL w
 
 If your URLs do not contain a `WxH` component, nothing is replaced—the original URL is used as-is.
 
-## Opting out with `no-resize`
+## Opting out with `slazy-no-resize`
 
-Add the `no-resize` class when you need to keep the original URL untouched—for example when your asset pipeline does not support width substitution.
+Add the `slazy-no-resize` class when you need to keep the original URL untouched—for example when your asset pipeline does not support width substitution.
 
 ```html
 <img
-  class="product no-resize"
+  class="product slazy-no-resize"
   src="/img/placeholder.jpg"
   data-slazy-src="/img/product-original.jpg"
   alt="Product"
 />
 
 <div
-  class="hero-banner no-resize"
+  class="hero-banner slazy-no-resize"
   style="background-image: url('/img/placeholder-bg.jpg');"
   data-slazy-url="/img/hero-original.jpg"
 ></div>
@@ -115,7 +115,7 @@ The Jasmine specs cover visibility helpers, image loading, background loading, a
 npm test
 ```
 
-This executes the 26 DOM-based specs under `tests/`.
+This executes the 30 DOM-based specs under `tests/`.
 
 ## Carousel Support
 
