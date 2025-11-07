@@ -10,21 +10,60 @@ function checkVisible(elementInstance) {
     return normalized === "true" || normalized === "1";
   };
 
-  if ($element && $element.hasClass("carousel_item_image")) {
-    const carouselItem = $element.closest(".carousel_item");
-    const carouselHidden =
-      carouselItem && typeof carouselItem.attr === "function"
-        ? carouselItem.attr("aria-hidden")
-        : null;
+  const hasCarouselImageClass =
+    elementInstance &&
+    elementInstance.classList &&
+    elementInstance.classList.contains("carousel_item_image");
+
+  const usesJQueryCarouselCheck =
+    !hasCarouselImageClass &&
+    $element &&
+    typeof $element.hasClass === "function" &&
+    $element.hasClass("carousel_item_image");
+
+  if (hasCarouselImageClass || usesJQueryCarouselCheck) {
+    let carouselHidden = null;
+
+    if (
+      elementInstance &&
+      typeof elementInstance.closest === "function"
+    ) {
+      const carouselItem = elementInstance.closest(".carousel_item");
+      if (carouselItem && typeof carouselItem.getAttribute === "function") {
+        carouselHidden = carouselItem.getAttribute("aria-hidden");
+      }
+    }
+
+    if (carouselHidden == null && $element && typeof $element.closest === "function") {
+      const carouselItem = $element.closest(".carousel_item");
+      if (carouselItem && typeof carouselItem.attr === "function") {
+        carouselHidden = carouselItem.attr("aria-hidden");
+      }
+    }
+
     if (isHidden(carouselHidden)) {
       return false;
     }
 
-    const splideSlide = $element.closest("div.splide__slide");
-    const splideHidden =
-      splideSlide && typeof splideSlide.attr === "function"
-        ? splideSlide.attr("aria-hidden")
-        : null;
+    let splideHidden = null;
+
+    if (
+      elementInstance &&
+      typeof elementInstance.closest === "function"
+    ) {
+      const splideSlide = elementInstance.closest("div.splide__slide");
+      if (splideSlide && typeof splideSlide.getAttribute === "function") {
+        splideHidden = splideSlide.getAttribute("aria-hidden");
+      }
+    }
+
+    if (splideHidden == null && $element && typeof $element.closest === "function") {
+      const splideSlide = $element.closest("div.splide__slide");
+      if (splideSlide && typeof splideSlide.attr === "function") {
+        splideHidden = splideSlide.attr("aria-hidden");
+      }
+    }
+
     if (isHidden(splideHidden)) {
       return false;
     }
