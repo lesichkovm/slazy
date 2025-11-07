@@ -158,7 +158,9 @@ function loadLazyImage() {
 let loadingLazyImages = setInterval(loadLazyImage, 1000);
 
 function loadLazyUrl() {
-  if (!window.$ && !window.jQuery) {
+  const jq = window.$ || window.jQuery;
+
+  if (typeof jq !== "function") {
     return;
   }
 
