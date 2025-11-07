@@ -185,13 +185,13 @@ function loadLazyUrl() {
         return;
       }
 
-      let url = $(this).data("slazy-url");
+      let url = jq(this).data("slazy-url");
 
       if (typeof url === "undefined") {
         return;
       }
 
-      const noResize = $(this).hasClass("no-resize");
+      const noResize = jq(this).hasClass("no-resize");
       if (noResize === false) {
         const resizedUrl = url.replace(/\d+x\d+/i, realWidth + "x0");
         url = resizedUrl;
