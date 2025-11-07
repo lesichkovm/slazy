@@ -218,6 +218,31 @@
   }
 
   /**
+   * Removes a `data-*` attribute value when present.
+   *
+   * @param {Element} element - The target DOM node.
+   * @param {string} key - Attribute key without the `data-` prefix.
+   */
+  function removeData(element, key) {
+    if (!element) {
+      return;
+    }
+
+    const attrName = `data-${key}`;
+
+    if (typeof element.removeAttribute === "function") {
+      element.removeAttribute(attrName);
+    }
+
+    if (element.dataset) {
+      const datasetKey = dataKeyToDatasetKey(key);
+      if (Object.prototype.hasOwnProperty.call(element.dataset, datasetKey)) {
+        delete element.dataset[datasetKey];
+      }
+    }
+  }
+
+  /**
    * Checks whether an element has a CSS class using either `classList` or legacy fallbacks.
    *
    * @param {Element} element - The element to inspect.
@@ -535,9 +560,12 @@
               self.width = widthValue;
               self.height = heightValue;
             }
+            addClass(self, "image-loaded");
+          };
+          newImg.onerror = function () {
+            removeData(self, "queue");
           };
           newImg.src = url;
-          addClass(element, "image-loaded");
         }
       }
     );

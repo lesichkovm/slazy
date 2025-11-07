@@ -165,6 +165,21 @@ describe('loadLazyImage', function() {
         expect(img.classList.contains('image-loaded')).toBe(true);
     });
 
+    it('should reset queue markers when image load fails', function() {
+        const img = createImageElement();
+
+        loadLazyImage();
+
+        expect(createdImages.length).toBe(1);
+        const mock = createdImages[0];
+        expect(img.dataset.queue).toBe('loading');
+
+        mock.onerror();
+
+        expect(img.dataset.queue).toBeUndefined();
+        expect(img.classList.contains('image-loaded')).toBe(false);
+    });
+
     it('should use parent width when element width is percentage based', function() {
         const parent = createParent(250);
         const img = createImageElement({ widthStyle: '100%', parent: parent });
