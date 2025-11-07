@@ -148,19 +148,19 @@ describe('loadLazyUrl', function() {
         expect(element.classList.contains('slazy-image-loaded')).toBe(false);
     });
 
-    it('should load visible background images', function() {
+    it('should load visible background images without resizing by default', function() {
         const element = createLazyElement({ widthStyle: '150px' });
 
         loadLazyUrl();
 
         expect(createdImages.length).toBe(1);
         const mock = createdImages[0];
-        expect(mock.src).toBe('background-150x0.jpg');
+        expect(mock.src).toBe('background-640x480.jpg');
 
         mock.onload();
 
         expect(element.dataset.queue).toBeUndefined();
-        expect(element.style.backgroundImage).toContain('background-150x0.jpg');
+        expect(element.style.backgroundImage).toContain('background-640x480.jpg');
         expect(element.classList.contains('slazy-image-loaded')).toBe(true);
     });
 
@@ -189,11 +189,11 @@ describe('loadLazyUrl', function() {
 
         expect(createdImages.length).toBe(1);
         const mock = createdImages[0];
-        expect(mock.src).toBe('background-250x0.jpg');
+        expect(mock.src).toBe('background-640x480.jpg');
 
         mock.onload();
 
-        expect(element.style.backgroundImage).toContain('background-250x0.jpg');
+        expect(element.style.backgroundImage).toContain('background-640x480.jpg');
         expect(element.dataset.queue).toBeUndefined();
     });
 
@@ -227,18 +227,18 @@ describe('loadLazyUrl', function() {
         expect(element.style.backgroundImage).toBe('');
     });
 
-    it('should resize URLs when no-resize class is not present', function() {
-        const element = createLazyElement({ widthStyle: '180px' });
+    it('should resize URLs when slazy-resize class is present', function() {
+        const element = createLazyElement({ widthStyle: '180px', classList: ['slazy-resize'], dataset: { 'slazy-url': 'background-640x480.jpg', 'slazy-height': '480' } });
 
         loadLazyUrl();
 
         expect(createdImages.length).toBe(1);
         const mock = createdImages[0];
-        expect(mock.src).toBe('background-180x0.jpg');
+        expect(mock.src).toBe('background-180x480.jpg');
 
         mock.onload();
 
-        expect(element.style.backgroundImage).toContain('background-180x0.jpg');
+        expect(element.style.backgroundImage).toContain('background-180x480.jpg');
     });
 
     it('should resize Unsplash-style query parameters for backgrounds', function() {
@@ -246,25 +246,29 @@ describe('loadLazyUrl', function() {
             widthStyle: '200px',
             rectWidth: 200,
             dataset: {
-                'slazy-url': 'https://images.unsplash.com/photo-1523924836160-1f772f174db9?auto=format&fit=crop&w=1600&h=1000&q=80'
-            }
+                'slazy-url': 'https://images.unsplash.com/photo-1523924836160-1f772f174db9?auto=format&fit=crop&w=1600&h=1000&q=80',
+                'slazy-height': '1000'
+            },
+            classList: ['slazy-resize']
         });
+        element.setAttribute('width', '1600');
+        element.setAttribute('height', '1000');
 
         loadLazyUrl();
 
         expect(createdImages.length).toBe(1);
         const mock = createdImages[0];
         expect(mock.src).toContain('w=200');
-        expect(mock.src).toContain('h=0');
+        expect(mock.src).toContain('h=125');
 
         mock.onload();
 
         expect(element.style.backgroundImage).toContain('w=200');
-        expect(element.style.backgroundImage).toContain('h=0');
+        expect(element.style.backgroundImage).toContain('h=125');
     });
 
     it('should not resize URLs when no-resize class is present', function() {
-        const element = createLazyElement({ classList: ['slazy-no-resize'], widthStyle: '180px' });
+        const element = createLazyElement({ classList: ['slazy-resize', 'slazy-no-resize'], widthStyle: '180px' });
 
         loadLazyUrl();
 
@@ -275,6 +279,20 @@ describe('loadLazyUrl', function() {
         mock.onload();
 
         expect(element.style.backgroundImage).toContain('background-640x480.jpg');
+    });
+
+    it('should force zero-height parameters when slazy-resize-zero class is present', function() {
+        const element = createLazyElement({ widthStyle: '180px', classList: ['slazy-resize-zero'], dataset: { 'slazy-url': 'background-640x480.jpg' } });
+
+        loadLazyUrl();
+
+        expect(createdImages.length).toBe(1);
+        const mock = createdImages[0];
+        expect(mock.src).toBe('background-180x0.jpg');
+
+        mock.onload();
+
+        expect(element.style.backgroundImage).toContain('background-180x0.jpg');
     });
 
     it('should skip already processed elements', function() {

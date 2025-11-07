@@ -10,7 +10,7 @@ Slazy provides a lightweight helper for progressively loading images and backgro
 
 - Detects when an element becomes visible in the viewport, including special handling for Slick/Splide carousels that hide slides with `aria-hidden`.
 - Upgrades `<img>` tags from a lightweight placeholder (`src`) to the full asset stored in `data-slazy-src` once visible.
-- Replaces background images stored in `data-slazy-url` while optionally resizing the URL to match the element width.
+- Replaces background images stored in `data-slazy-url`, with opt-in URL resizing driven by utility classes.
 - Avoids redundant work by tracking queued and completed elements via `data-queue` and the `.slazy-image-loaded` marker class.
 - Supports a configurable prefetch margin so assets can load slightly before entering the viewport.
 
@@ -49,16 +49,27 @@ Download `slazy.js`, drop it into your project, and import it from your bundle e
 ></div>
 ```
 
-Add `data-slazy-src` (for `<img>`) or `data-slazy-url` (for any element with a background) and include `slazy.js`. Slazy polls the DOM every second, and the first time an element is visible it swaps the placeholder with the real asset and marks the node with `.slazy-image-loaded`.
+Add `data-slazy-src` (for `<img>`) or `data-slazy-url` (for any element with a background) and include `slazy.js`. Slazy polls the DOM every second, and the first time an element is visible it swaps the placeholder with the real asset and marks the node with `.slazy-image-loaded`. To request responsive URL resizing, opt in with the classes described below.
 
 ## Resizing behaviour
 
-When Slazy upgrades an asset it optionally rewrites any `WxH` token in the URL with the measured element width: `640x480` becomes `250x0` if the element is 250 px wide. This lets you serve responsive variants via URL-driven resizing services.
+By default Slazy now leaves URLs untouched. Resizing services can be engaged through helper classes that control how width and height tokens are rewritten:
 
-- **Images**: the width is derived from the element itself, falling back to the parent width when the image uses percentage-based sizing.
-- **Backgrounds**: the width is taken from the element or its parent using the same logic.
+- `.slazy-resize` – Replaces the width token/query parameter with the measured element width and propagates a height when one can be inferred (via attributes, natural dimensions, or optional `data-slazy-height`).
+- `.slazy-resize-zero` – Forces the height component to `0`, mirroring the historic behaviour for services that accept “heightless” requests.
+- `.slazy-no-resize` – Explicit opt-out that always keeps the original URL. This overrides the two classes above if combined.
 
-If your URLs do not contain a `WxH` component, nothing is replaced—the original URL is used as-is.
+Without any of these classes the original `data-slazy-*` URL is used verbatim.
+
+Slazy detects proportional information in this order when `.slazy-resize` is present:
+
+1. Explicit `width`/`height` HTML attributes.
+2. Intrinsic dimensions (`naturalWidth`/`naturalHeight`).
+3. Optional `data-slazy-width`/`data-slazy-height` hints.
+4. The rendered box ratio (`getBoundingClientRect`).
+5. Inline/computed CSS height.
+
+Supplying `data-slazy-height` (and optionally `data-slazy-width`) is entirely optional—use it only when the element cannot expose a reliable ratio via attributes or intrinsic data. When present, the hint participates in the order above; when omitted, Slazy simply falls back to the remaining sources without failing.
 
 ## Prefetch margin
 
@@ -70,20 +81,28 @@ Slazy.setPrefetchMargin(200); // start loading when items are within 200px of th
 
 Call `Slazy.getPrefetchMargin()` to inspect the current value. Margins are clamped to a minimum of 0.
 
-## Opting out with `slazy-no-resize`
+## Controlling resize behaviour with classes
 
-Add the `slazy-no-resize` class when you need to keep the original URL untouched—for example when your asset pipeline does not support width substitution.
+| Class | Effect |
+| --- | --- |
+| _none_ | Load the original URL without any substitution (default). |
+| `.slazy-resize` | Substitute width tokens/queries with the element width and propagate height when available. |
+| `.slazy-resize-zero` | Substitute width while forcing all height tokens/queries to `0`. |
+| `.slazy-no-resize` | Always skip URL rewriting, even if combined with the classes above. |
+
+### Example usage
 
 ```html
 <img
-  class="product slazy-no-resize"
+  class="product slazy-resize"
   src="/img/placeholder.jpg"
-  data-slazy-src="/img/product-original.jpg"
+  data-slazy-src="/img/product-1600x900.jpg"
+  data-slazy-height="900" <!-- Optional hint when real dimensions are unknown -->
   alt="Product"
 />
 
 <div
-  class="hero-banner slazy-no-resize"
+  class="hero-banner slazy-resize-zero"
   style="background-image: url('/img/placeholder-bg.jpg');"
   data-slazy-url="/img/hero-original.jpg"
 ></div>
@@ -111,7 +130,8 @@ If you are using Slick or Splide carousels, add the `carousel_item_image` class 
 Open `example/index.html` for a self-contained demo illustrating:
 
 - Standard image and background lazy loading.
-- The `no-resize` modifier for both images and backgrounds.
+- Opt-in resizing via `.slazy-resize` and `.slazy-resize-zero`.
+- Explicit opt-out using `.slazy-no-resize`.
 - Carousel-specific behaviour with `aria-hidden` toggling.
 
 ## Development

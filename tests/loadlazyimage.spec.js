@@ -150,7 +150,7 @@ describe('loadLazyImage', function() {
         expect(createdImages.length).toBe(0);
     });
 
-    it('should load visible images', function() {
+    it('should load visible images without resizing by default', function() {
         const img = createImageElement();
 
         loadLazyImage();
@@ -158,7 +158,7 @@ describe('loadLazyImage', function() {
         expect(createdImages.length).toBe(1);
         const mock = createdImages[0];
         expect(img.dataset.queue).toBe('loading');
-        expect(mock.src).toBe('image-100x0.jpg');
+        expect(mock.src).toBe('image-640x480.jpg');
 
         mock.width = 150;
         mock.height = 75;
@@ -206,7 +206,7 @@ describe('loadLazyImage', function() {
 
         expect(createdImages.length).toBe(2);
         const secondMock = createdImages[1];
-        expect(secondMock.src).toBe('image-320x0.jpg');
+        expect(secondMock.src).toBe('image-320x240.jpg');
     });
 
     it('should use parent width when element width is percentage based', function() {
@@ -217,7 +217,7 @@ describe('loadLazyImage', function() {
 
         expect(createdImages.length).toBe(1);
         const mock = createdImages[0];
-        expect(mock.src).toBe('image-250x0.jpg');
+        expect(mock.src).toBe('image-640x480.jpg');
 
         mock.width = 250;
         mock.onload();
@@ -263,8 +263,47 @@ describe('loadLazyImage', function() {
         expect(createdImages.length).toBe(0);
     });
 
-    it('should resize URLs when no-resize class is not present', function() {
-        createImageElement({ dataset: { 'slazy-src': 'image-640x480.jpg' } });
+    it('should resize URLs when slazy-resize class is present', function() {
+        const element = createImageElement({ dataset: { 'slazy-src': 'image-640x480.jpg' }, classList: ['slazy-resize'] });
+        element.setAttribute('width', '400');
+        element.setAttribute('height', '200');
+
+        loadLazyImage();
+
+        expect(createdImages.length).toBe(1);
+        expect(createdImages[0].src).toBe('image-100x50.jpg');
+    });
+
+    it('should resize Unsplash-style query parameters for images', function() {
+        const element = createImageElement({
+            dataset: {
+                'slazy-src': 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1600&h=1000&q=80',
+            },
+            rectWidth: 240,
+            widthStyle: '240px',
+            classList: ['slazy-resize']
+        });
+        element.setAttribute('width', '1600');
+        element.setAttribute('height', '1000');
+
+        loadLazyImage();
+
+        expect(createdImages.length).toBe(1);
+        expect(createdImages[0].src).toContain('w=240');
+        expect(createdImages[0].src).toContain('h=150');
+    });
+
+    it('should not resize URLs when no-resize class is present', function() {
+        createImageElement({ dataset: { 'slazy-src': 'image-640x480.jpg' }, classList: ['slazy-resize', 'slazy-no-resize'] });
+
+        loadLazyImage();
+
+        expect(createdImages.length).toBe(1);
+        expect(createdImages[0].src).toBe('image-640x480.jpg');
+    });
+
+    it('should force zero-height parameters when slazy-resize-zero class is present', function() {
+        createImageElement({ dataset: { 'slazy-src': 'image-640x480.jpg' }, classList: ['slazy-resize-zero'] });
 
         loadLazyImage();
 
@@ -272,28 +311,19 @@ describe('loadLazyImage', function() {
         expect(createdImages[0].src).toBe('image-100x0.jpg');
     });
 
-    it('should resize Unsplash-style query parameters for images', function() {
-        const element = createImageElement({
-            dataset: {
-                'slazy-src': 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1600&h=1000&q=80'
-            },
-            rectWidth: 240,
-            widthStyle: '240px'
+    it('should propagate measured height when available in slazy-resize mode', function() {
+        const img = createImageElement({
+            dataset: { 'slazy-src': 'image-640x480.jpg' },
+            classList: ['slazy-resize'],
+            rectWidth: 200,
+            widthStyle: '200px'
         });
+        img.setAttribute('width', '400');
+        img.setAttribute('height', '200');
 
         loadLazyImage();
 
         expect(createdImages.length).toBe(1);
-        expect(createdImages[0].src).toContain('w=240');
-        expect(createdImages[0].src).toContain('h=0');
-    });
-
-    it('should not resize URLs when no-resize class is present', function() {
-        createImageElement({ dataset: { 'slazy-src': 'image-640x480.jpg' }, classList: ['slazy-no-resize'] });
-
-        loadLazyImage();
-
-        expect(createdImages.length).toBe(1);
-        expect(createdImages[0].src).toBe('image-640x480.jpg');
+        expect(createdImages[0].src).toBe('image-200x100.jpg');
     });
 });

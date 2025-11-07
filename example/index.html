@@ -141,8 +141,10 @@
         </p>
         <div class="image-wrapper">
           <img
+            class="slazy-resize"
             src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png"
             data-slazy-src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&h=900&q=80"
+            data-slazy-height="900"
             alt="Lazy loaded hero"
           />
         </div>
@@ -164,8 +166,10 @@
             aria-hidden="true"
           ></canvas>
           <img
+            class="slazy-resize"
             src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png"
             data-slazy-src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&h=900&q=80"
+            data-slazy-height="900"
             alt="BlurHash placeholder swapping to a mountain landscape"
           />
         </div>
@@ -178,9 +182,10 @@
           to avoid pulling unnecessarily large assets.
         </p>
         <div
-          class="feature-card"
+          class="feature-card slazy-resize"
           style="background-image: url('https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png');"
           data-slazy-url="https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1600&h=900&q=80"
+          data-slazy-height="900"
         >
           Loaded on demand
         </div>
@@ -196,24 +201,26 @@
         <div class="gallery-grid">
           <figure class="gallery-card">
             <img
+              class="slazy-resize"
               src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png"
               data-slazy-src="https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=1600&h=1000&q=80"
+              data-slazy-height="1000"
               alt="Mountain field"
             />
             <figcaption>Default behaviour: resizes to the element width.</figcaption>
           </figure>
           <figure class="gallery-card">
             <img
-              class="no-resize"
+              class="slazy-no-resize"
               src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png"
               data-slazy-src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1600&h=1000&q=80"
               alt="Snowy mountains"
             />
-            <figcaption><code>no-resize</code>: keeps the original source dimensions.</figcaption>
+            <figcaption><code>slazy-no-resize</code>: keeps the original source dimensions.</figcaption>
           </figure>
         </div>
         <div
-          class="feature-card no-resize"
+          class="feature-card slazy-no-resize"
           style="background-image: url('https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png');"
           data-slazy-url="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&h=900&q=80"
         >
@@ -230,24 +237,30 @@
         <div class="gallery-grid">
           <figure class="gallery-card">
             <img
+              class="slazy-resize"
               src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png"
               data-slazy-src="https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1600&h=1000&q=80"
+              data-slazy-height="1000"
               alt="Misty forest trail"
             />
             <figcaption>Morning fog over the pines</figcaption>
           </figure>
           <figure class="gallery-card">
             <img
+              class="slazy-resize"
               src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png"
               data-slazy-src="https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&w=1600&h=1000&q=80"
+              data-slazy-height="1000"
               alt="City skyline at dusk"
             />
             <figcaption>City lights at golden hour</figcaption>
           </figure>
           <figure class="gallery-card">
             <img
+              class="slazy-resize"
               src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png"
               data-slazy-src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&h=1000&q=80"
+              data-slazy-height="1000"
               alt="Ocean waves at sunset"
             />
             <figcaption>Waves meeting the sunset</figcaption>
@@ -307,7 +320,7 @@
       </small>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/blurhash@1.1.4/dist/blurhash.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/blurhash@2.0.5/dist/index.min.js"></script>
     <script>
       // Decode BlurHash strings into canvases so visitors see a soft preview before Slazy promotes the full image.
       document.addEventListener("DOMContentLoaded", function () {

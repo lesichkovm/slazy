@@ -20,6 +20,8 @@
 
   const CLASS_IMAGE_LOADED = "slazy-image-loaded";
   const CLASS_NO_RESIZE = "slazy-no-resize";
+  const CLASS_RESIZE = "slazy-resize";
+  const CLASS_RESIZE_ZERO = "slazy-resize-zero";
 
   const api = {};
 
@@ -317,41 +319,126 @@
   }
 
   /**
-   * Normalises asset URLs so width-oriented services receive the target element width.
+   * Normalises asset URLs so width-oriented services receive updated dimensions when requested.
    *
    * @param {string} originalUrl - Original image/background URL.
-   * @param {number} width - Effective element width in pixels.
+   * @param {number} width - Target element width in pixels.
+   * @param {number} height - Target element height in pixels.
+   * @param {"auto"|"zero"|"none"} mode - Resize strategy requested via CSS classes.
    * @returns {string} Resized URL or the original when no changes are required.
    */
-  function resizeUrlForWidth(originalUrl, width) {
+  function rewriteUrlDimensions(originalUrl, width, height, mode) {
     if (!originalUrl || width <= 0) {
       return originalUrl;
     }
 
+    const roundedWidth = Math.round(width);
+    const roundedHeight = Math.round(height);
+    const shouldForceZero = mode === "zero";
+    const shouldUpdateHeight = mode === "auto" && roundedHeight > 0;
+
     let url = originalUrl;
-    let widthAdjusted = false;
 
-    if (/\d+x\d+/i.test(url)) {
-      url = url.replace(/\d+x\d+/i, `${width}x0`);
-      widthAdjusted = true;
-    }
+    url = url.replace(/(\b)(\d+)x(\d+)(\b|(?=_))/i, (match, prefix, oldWidth, oldHeight, suffix) => {
+      let heightToken = oldHeight;
+      if (shouldForceZero) {
+        heightToken = "0";
+      } else if (shouldUpdateHeight) {
+        heightToken = String(roundedHeight);
+      }
+      return `${prefix}${roundedWidth}x${heightToken}${suffix}`;
+    });
 
-    if (/[?&](w|width)=\d+/i.test(url)) {
-      url = url.replace(
-        /([?&])(w|width)=\d+/gi,
-        (match, separator, key) => `${separator}${key}=${width}`
-      );
-      widthAdjusted = true;
-    }
+    url = url.replace(/([?&])(w|width)=\d+/gi, (match, separator, key) => `${separator}${key}=${roundedWidth}`);
 
-    if (widthAdjusted && /[?&](h|height)=\d+/i.test(url)) {
-      url = url.replace(
-        /([?&])(h|height)=\d+/gi,
-        (match, separator, key) => `${separator}${key}=0`
-      );
+    if (shouldForceZero) {
+      url = url.replace(/([?&])(h|height)=\d+/gi, (match, separator, key) => `${separator}${key}=0`);
+    } else if (shouldUpdateHeight) {
+      url = url.replace(/([?&])(h|height)=\d+/gi, (match, separator, key) => `${separator}${key}=${roundedHeight}`);
     }
 
     return url;
+  }
+
+  /**
+   * Determines which resizing strategy should be applied to an element.
+   *
+   * @param {Element} element - Target element.
+   * @returns {"auto"|"zero"|"none"} Resizing mode descriptor.
+   */
+  function getResizeMode(element) {
+    if (!element) {
+      return "none";
+    }
+
+    if (hasClass(element, CLASS_NO_RESIZE)) {
+      return "none";
+    }
+
+    if (hasClass(element, CLASS_RESIZE_ZERO)) {
+      return "zero";
+    }
+
+    if (hasClass(element, CLASS_RESIZE)) {
+      return "auto";
+    }
+
+    return "none";
+  }
+
+  /**
+   * Attempts to derive a proportional height for resized assets.
+   *
+   * @param {Element} element - Target element.
+   * @param {number} targetWidth - Intended width in pixels.
+   * @returns {number} Resolved height in pixels or 0 when it cannot be determined.
+   */
+  function resolveResizeHeight(element, targetWidth) {
+    if (!element || targetWidth <= 0) {
+      return 0;
+    }
+
+    const getAttrNumber = (attr) => {
+      if (typeof element.getAttribute !== "function") {
+        return 0;
+      }
+      const value = Number(element.getAttribute(attr));
+      return Number.isFinite(value) ? value : 0;
+    };
+
+    const attrWidth = getAttrNumber("width");
+    const attrHeight = getAttrNumber("height");
+    if (attrWidth > 0 && attrHeight > 0) {
+      return Math.round((attrHeight / attrWidth) * targetWidth);
+    }
+
+    const naturalWidth = Number(element.naturalWidth || element.width || 0);
+    const naturalHeight = Number(element.naturalHeight || element.height || 0);
+    if (naturalWidth > 0 && naturalHeight > 0) {
+      return Math.round((naturalHeight / naturalWidth) * targetWidth);
+    }
+
+    const dataWidth = Number(getData(element, "slazy-width"));
+    const dataHeight = Number(getData(element, "slazy-height"));
+    if (dataWidth > 0 && dataHeight > 0) {
+      return Math.round((dataHeight / dataWidth) * targetWidth);
+    }
+
+    if (dataHeight > 0) {
+      return Math.round(dataHeight);
+    }
+
+    const rect = typeof element.getBoundingClientRect === "function" ? element.getBoundingClientRect() : null;
+    if (rect && rect.width > 0 && rect.height > 0) {
+      return Math.round((rect.height / rect.width) * targetWidth);
+    }
+
+    const styleHeight = parseFloat(getStyleValue(element, "height"));
+    if (!Number.isNaN(styleHeight) && styleHeight > 0) {
+      return Math.round(styleHeight);
+    }
+
+    return 0;
   }
 
   /**
@@ -549,9 +636,10 @@
           return;
         }
 
-        const noResize = hasClass(element, CLASS_NO_RESIZE);
-        if (noResize === false) {
-          url = resizeUrlForWidth(url, realWidth);
+        const resizeMode = getResizeMode(element);
+        if (resizeMode !== "none") {
+          const resolvedHeight = resizeMode === "zero" ? 0 : resolveResizeHeight(element, realWidth);
+          url = rewriteUrlDimensions(url, realWidth, resolvedHeight, resizeMode);
         }
 
         if (element.src === url) {
@@ -569,18 +657,23 @@
           const newImg = new Image();
           newImg.onload = function () {
             self.src = this.src;
-            const widthValue = Number(
-              this.width || this.naturalWidth || realWidth || 0
-            );
-            const heightValue = Number(
-              this.height || this.naturalHeight || 0
-            );
-            if (typeof self.setAttribute === "function") {
-              self.setAttribute("width", widthValue);
-              self.setAttribute("height", heightValue);
-            } else {
-              self.width = widthValue;
-              self.height = heightValue;
+            const widthValue = Number(this.width || this.naturalWidth || realWidth || 0);
+            const heightValue = Number(this.height || this.naturalHeight || 0);
+
+            if (widthValue > 0) {
+              if (typeof self.setAttribute === "function") {
+                self.setAttribute("width", widthValue);
+              } else {
+                self.width = widthValue;
+              }
+            }
+
+            if (heightValue > 0) {
+              if (typeof self.setAttribute === "function") {
+                self.setAttribute("height", heightValue);
+              } else {
+                self.height = heightValue;
+              }
             }
             addClass(self, CLASS_IMAGE_LOADED);
             removeData(self, "queue");
@@ -633,9 +726,10 @@
           return;
         }
 
-        const noResize = hasClass(element, CLASS_NO_RESIZE);
-        if (noResize === false) {
-          url = resizeUrlForWidth(url, realWidth);
+        const resizeMode = getResizeMode(element);
+        if (resizeMode !== "none") {
+          const resolvedHeight = resizeMode === "zero" ? 0 : resolveResizeHeight(element, realWidth);
+          url = rewriteUrlDimensions(url, realWidth, resolvedHeight, resizeMode);
         }
 
         const currentBackground = getBackgroundImage(element);
