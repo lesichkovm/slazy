@@ -170,7 +170,7 @@ describe('loadLazyImage', function() {
         expect(img.classList.contains('slazy-image-loaded')).toBe(true);
     });
 
-    it('should reset queue markers when image load fails', function() {
+    it('should reset queue markers when image load fails once', function() {
         const img = createImageElement();
 
         loadLazyImage();
@@ -182,7 +182,53 @@ describe('loadLazyImage', function() {
         mock.onerror();
 
         expect(img.dataset.queue).toBeUndefined();
-        expect(img.classList.contains('slazy-image-loaded')).toBe(false);
+        expect(img.dataset.retryCount).toBe('1');
+        expect(img.classList.contains('slazy-load-failed')).toBe(false);
+    });
+
+    it('should mark element as failed after exceeding retry attempts', function() {
+        const img = createImageElement();
+
+        Slazy.checkVisible.and.returnValue(true);
+
+        loadLazyImage();
+        expect(createdImages.length).toBe(1);
+        createdImages[0].onerror();
+
+        // retry #2
+        loadLazyImage();
+        expect(createdImages.length).toBe(2);
+        createdImages[1].onerror();
+
+        // retry #3
+        loadLazyImage();
+        expect(createdImages.length).toBe(3);
+        createdImages[2].onerror();
+
+        expect(img.dataset.queue).toBe('failed');
+        expect(img.dataset.retryCount).toBe('3');
+        expect(img.classList.contains('slazy-load-failed')).toBe(true);
+
+        loadLazyImage();
+        expect(createdImages.length).toBe(3);
+    });
+
+    it('should clear retry state after successful load', function() {
+        const img = createImageElement();
+
+        loadLazyImage();
+        createdImages[0].onerror();
+
+        loadLazyImage();
+        const retryMock = createdImages[1];
+        retryMock.width = 320;
+        retryMock.height = 160;
+        retryMock.onload();
+
+        expect(img.dataset.queue).toBeUndefined();
+        expect(img.dataset.retryCount).toBeUndefined();
+        expect(img.classList.contains('slazy-load-failed')).toBe(false);
+        expect(img.classList.contains('slazy-image-loaded')).toBe(true);
     });
 
     it('should allow reloading when slazy-src changes after successful load', function() {

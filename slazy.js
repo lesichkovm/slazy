@@ -24,10 +24,14 @@
   const CLASS_RESIZE_ZERO = "slazy-resize-zero";
   const CLASS_PLACEHOLDER = "slazy-placeholder";
   const CLASS_PLACEHOLDER_ACTIVE = "slazy-placeholder-active";
+  const CLASS_LOAD_FAILED = "slazy-load-failed";
 
   const PLACEHOLDER_BACKGROUND_COLOR = "#e2e8f0";
   const DATA_PLACEHOLDER_ACTIVE = "placeholder-active";
   const DATA_PLACEHOLDER_ORIGINAL_BGCOLOR = "placeholder-original-bgcolor";
+  const DATA_RETRY_COUNT = "retry-count";
+
+  const MAX_RETRY_ATTEMPTS = 3;
 
   const api = {};
 
@@ -331,6 +335,35 @@
       const filtered = tokens.filter((token) => token !== className);
       element.className = filtered.join(" ");
     }
+  }
+
+  function getRetryCount(element) {
+    if (!element) {
+      return 0;
+    }
+
+    const value = Number(getData(element, DATA_RETRY_COUNT));
+    return Number.isFinite(value) && value > 0 ? value : 0;
+  }
+
+  function incrementRetryCount(element) {
+    if (!element) {
+      return 0;
+    }
+
+    const nextCount = getRetryCount(element) + 1;
+    setData(element, DATA_RETRY_COUNT, String(nextCount));
+    return nextCount;
+  }
+
+  function resetRetryState(element) {
+    if (!element) {
+      return;
+    }
+
+    removeData(element, DATA_RETRY_COUNT);
+    removeClass(element, CLASS_LOAD_FAILED);
+    removeData(element, "queue");
   }
 
   /**
@@ -688,7 +721,9 @@
    * Applies responsive URL rewrites, prevents duplicate work, and tracks load state.
    */
   api.loadLazyImage = function loadLazyImage() {
-    const hasLazyImages = hasMatchingElements(`img[data-slazy-src]:not(.${CLASS_IMAGE_LOADED})`);
+    const hasLazyImages = hasMatchingElements(
+      `img[data-slazy-src]:not(.${CLASS_IMAGE_LOADED}):not([data-queue="failed"])`
+    );
 
     if (!hasLazyImages) {
       stopImageTimer();
@@ -696,7 +731,7 @@
     }
 
     forEachMatchingElement(
-      `img[data-slazy-src]:not(.${CLASS_IMAGE_LOADED}):not(.carousel_item_image)`,
+      `img[data-slazy-src]:not(.${CLASS_IMAGE_LOADED}):not([data-queue="failed"]):not(.carousel_item_image)`,
       function (element) {
         if (!element) {
           return;
@@ -736,11 +771,12 @@
         }
 
         const queueState = getData(element, "queue");
-        if (queueState === "loading") {
+        if (queueState === "loading" || queueState === "failed") {
           return;
         }
 
         if (api.checkVisible(element)) {
+          removeClass(element, CLASS_LOAD_FAILED);
           setData(element, "queue", "loading");
           const self = element;
           const newImg = new Image();
@@ -766,10 +802,16 @@
             }
             clearPlaceholder(self);
             addClass(self, CLASS_IMAGE_LOADED);
-            removeData(self, "queue");
+            resetRetryState(self);
           };
           newImg.onerror = function () {
-            removeData(self, "queue");
+            const attempts = incrementRetryCount(self);
+            if (attempts >= MAX_RETRY_ATTEMPTS) {
+              setData(self, "queue", "failed");
+              addClass(self, CLASS_LOAD_FAILED);
+            } else {
+              removeData(self, "queue");
+            }
           };
           newImg.src = url;
         }
@@ -782,7 +824,9 @@
    * Mirrors the image loader behaviour, including responsive URL adjustments and guards.
    */
   api.loadLazyUrl = function loadLazyUrl() {
-    const hasLazyUrls = hasMatchingElements(`*[data-slazy-url]:not(.${CLASS_IMAGE_LOADED})`);
+    const hasLazyUrls = hasMatchingElements(
+      `*[data-slazy-url]:not(.${CLASS_IMAGE_LOADED}):not([data-queue="failed"])`
+    );
 
     if (!hasLazyUrls) {
       stopUrlTimer();
@@ -790,7 +834,7 @@
     }
 
     forEachMatchingElement(
-      `*[data-slazy-url]:not(.${CLASS_IMAGE_LOADED}):not(.carousel_item_image)` ,
+      `*[data-slazy-url]:not(.${CLASS_IMAGE_LOADED}):not([data-queue="failed"]):not(.carousel_item_image)`,
       function (element) {
         if (!element) {
           return;
@@ -836,11 +880,12 @@
         }
 
         const queueState = getData(element, "queue");
-        if (queueState === "loading") {
+        if (queueState === "loading" || queueState === "failed") {
           return;
         }
 
         if (api.checkVisible(element)) {
+          removeClass(element, CLASS_LOAD_FAILED);
           setData(element, "queue", "loading");
           const self = element;
           const img = new Image();
@@ -848,10 +893,16 @@
             setBackgroundImage(self, `url(${this.src})`);
             clearPlaceholder(self);
             addClass(self, CLASS_IMAGE_LOADED);
-            removeData(self, "queue");
+            resetRetryState(self);
           };
           img.onerror = function () {
-            removeData(self, "queue");
+            const attempts = incrementRetryCount(self);
+            if (attempts >= MAX_RETRY_ATTEMPTS) {
+              setData(self, "queue", "failed");
+              addClass(self, CLASS_LOAD_FAILED);
+            } else {
+              removeData(self, "queue");
+            }
           };
           img.src = url;
         }

@@ -164,6 +164,22 @@ describe('loadLazyUrl', function() {
         expect(element.classList.contains('slazy-image-loaded')).toBe(true);
     });
 
+    it('should clear retry state after successful background load', function() {
+        const element = createLazyElement({ widthStyle: '170px' });
+
+        loadLazyUrl();
+        createdImages[0].onerror();
+
+        loadLazyUrl();
+        const retryMock = createdImages[1];
+        retryMock.onload();
+
+        expect(element.dataset.queue).toBeUndefined();
+        expect(element.dataset.retryCount).toBeUndefined();
+        expect(element.classList.contains('slazy-load-failed')).toBe(false);
+        expect(element.classList.contains('slazy-image-loaded')).toBe(true);
+    });
+
     it('should reset queue markers when background load fails', function() {
         const element = createLazyElement({ widthStyle: '140px' });
 
@@ -176,8 +192,30 @@ describe('loadLazyUrl', function() {
         mock.onerror();
 
         expect(element.dataset.queue).toBeUndefined();
+        expect(element.dataset.retryCount).toBe('1');
         expect(element.style.backgroundImage).toBe('');
+        expect(element.classList.contains('slazy-load-failed')).toBe(false);
         expect(element.classList.contains('slazy-image-loaded')).toBe(false);
+    });
+
+    it('should mark background as failed after exceeding retry attempts', function() {
+        const element = createLazyElement({ widthStyle: '160px' });
+
+        loadLazyUrl();
+        createdImages[0].onerror();
+
+        loadLazyUrl();
+        createdImages[1].onerror();
+
+        loadLazyUrl();
+        createdImages[2].onerror();
+
+        expect(element.dataset.queue).toBe('failed');
+        expect(element.dataset.retryCount).toBe('3');
+        expect(element.classList.contains('slazy-load-failed')).toBe(true);
+
+        loadLazyUrl();
+        expect(createdImages.length).toBe(3);
     });
 
     it('should use parent width when element width is percentage based', function() {

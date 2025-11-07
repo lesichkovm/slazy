@@ -13,6 +13,7 @@ Slazy provides a lightweight helper for progressively loading images and backgro
 - Replaces background images stored in `data-slazy-url`, with opt-in URL resizing driven by utility classes.
 - Applies lightweight placeholders when elements opt in via `.slazy-placeholder`.
 - Avoids redundant work by tracking queued and completed elements via `data-queue` and the `.slazy-image-loaded` marker class.
+- Caps retry attempts after transient failures and exposes a `.slazy-load-failed` marker so you can diagnose or restyle stubborn assets.
 - Supports a configurable prefetch margin so assets can load slightly before entering the viewport.
 
 ## Installation
@@ -131,6 +132,12 @@ Add the `.slazy-placeholder` class when you want Slazy to provide a neutral back
 ```
 
 If you use your own placeholder colour inline, Slazy will respect it and only fall back to its default when no colour is specified.
+
+## Retry handling
+
+Slazy retries failed requests up to three times to guard against transient network hiccups. Each attempt increments `data-retry-count` on the element. After the final retry fails, Slazy marks the node with `data-queue="failed"` and adds the `.slazy-load-failed` class. This stops further polling for that element, prevents runaway request loops, and gives you a convenient hook to surface error messaging or styling in your UI.
+
+When a subsequent load succeeds (for example after you fix the URL and trigger `Slazy.restart()`), the retry counters and failure class are automatically cleared.
 
 ## Carousel support
 
