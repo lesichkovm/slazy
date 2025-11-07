@@ -12,6 +12,7 @@ Slazy provides a lightweight helper for progressively loading images and backgro
 - Upgrades `<img>` tags from a lightweight placeholder (`src`) to the full asset stored in `data-slazy-src` once visible.
 - Replaces background images stored in `data-slazy-url` while optionally resizing the URL to match the element width.
 - Avoids redundant work by tracking queued and completed elements via `data-queue` and the `.slazy-image-loaded` marker class.
+- Supports a configurable prefetch margin so assets can load slightly before entering the viewport.
 
 ## Installation
 
@@ -58,6 +59,16 @@ When Slazy upgrades an asset it optionally rewrites any `WxH` token in the URL w
 - **Backgrounds**: the width is taken from the element or its parent using the same logic.
 
 If your URLs do not contain a `WxH` component, nothing is replaced—the original URL is used as-is.
+
+## Prefetch margin
+
+Slazy can begin loading assets before they intersect the viewport by configuring a prefetch margin (in pixels). Increase the margin for slower networks or to mask image pop-in:
+
+```js
+Slazy.setPrefetchMargin(200); // start loading when items are within 200px of the viewport
+```
+
+Call `Slazy.getPrefetchMargin()` to inspect the current value. Margins are clamped to a minimum of 0.
 
 ## Opting out with `slazy-no-resize`
 

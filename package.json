@@ -5,9 +5,8 @@
   "__main": "index.js",
   "main": "src/web.js",
   "scripts": {
-    "prebuild": "node -e \"const fs = require('fs'); if (!fs.existsSync('dist')) fs.mkdirSync('dist');\"",
-    "build": "node src/esbuild.config.js",
-    "postbuild": "uglifyjs --compress --mangle --output ./dist/slazy.min.js -- slazy.js"
+    "create-dist": "node -e \"const fs = require('fs'); if (!fs.existsSync('dist')) fs.mkdirSync('dist');\"",
+    "build-production": "uglifyjs --compress --mangle --output ./dist/slazy.min.js -- slazy.js"
   },
   "author": "",
   "license": "AGPL-3.0-only",

@@ -15,6 +15,7 @@
     pollDelay: 1000,
     imageInterval: null,
     urlInterval: null,
+    prefetchMargin: 0,
   };
 
   const CLASS_IMAGE_LOADED = "slazy-image-loaded";
@@ -89,6 +90,23 @@
     startPolling();
   }
 
+  function normaliseMargin(value) {
+    if (value == null) {
+      return 0;
+    }
+
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) {
+      return 0;
+    }
+
+    return Math.max(0, numeric);
+  }
+
+  function setPrefetchMarginInternal(value) {
+    state.prefetchMargin = normaliseMargin(value);
+  }
+
   /**
    * Determines whether an element should be considered visible for lazy loading purposes.
    * Handles carousel scenarios where ancestors manage visibility via ARIA attributes.
@@ -142,16 +160,17 @@
     }
 
     const rect = element.getBoundingClientRect();
+    const margin = Math.max(0, Number(state.prefetchMargin) || 0);
     const viewportHeight = Math.max(
       (document.documentElement && document.documentElement.clientHeight) || 0,
       (typeof window !== "undefined" && window.innerHeight) || 0
     );
 
     if (viewportHeight === 0) {
-      return rect.bottom >= 0;
+      return rect.bottom >= -margin;
     }
 
-    return rect.bottom >= 0 && rect.top < viewportHeight;
+    return rect.bottom >= -margin && rect.top < viewportHeight + margin;
   };
 
   /**
@@ -658,6 +677,12 @@
   api.start = startPolling;
   api.stop = stopPolling;
   api.restart = restartPolling;
+  api.setPrefetchMargin = function setPrefetchMargin(value) {
+    setPrefetchMarginInternal(value);
+  };
+  api.getPrefetchMargin = function getPrefetchMargin() {
+    return state.prefetchMargin;
+  };
 
   /**
    * Exposes test-friendly hooks that support white-box assertions without public reliance.
@@ -679,6 +704,12 @@
     ensureUrlTimer,
     stopImageTimer,
     stopUrlTimer,
+    get prefetchMargin() {
+      return state.prefetchMargin;
+    },
+    set prefetchMargin(value) {
+      setPrefetchMarginInternal(value);
+    },
   };
 
   startPolling();

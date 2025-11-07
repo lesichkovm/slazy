@@ -5,6 +5,7 @@ describe('checkVisible', function() {
     let originalInnerHeightDescriptor;
     let originalClientHeightDescriptor;
     let checkVisible;
+    let originalMargin;
     beforeEach(function() {
         fixture = document.createElement('div');
         document.body.appendChild(fixture);
@@ -13,6 +14,10 @@ describe('checkVisible', function() {
         fixture.appendChild(testElement);
 
         checkVisible = Slazy.checkVisible;
+        originalMargin = typeof Slazy.getPrefetchMargin === 'function' ? Slazy.getPrefetchMargin() : 0;
+        if (typeof Slazy.setPrefetchMargin === 'function') {
+            Slazy.setPrefetchMargin(0);
+        }
 
         mockRect = {
             top: 100,
@@ -45,6 +50,10 @@ describe('checkVisible', function() {
     afterEach(function() {
         if (fixture && fixture.parentNode) {
             fixture.parentNode.removeChild(fixture);
+        }
+
+        if (typeof Slazy.setPrefetchMargin === 'function') {
+            Slazy.setPrefetchMargin(originalMargin);
         }
 
         if (originalInnerHeightDescriptor) {
@@ -114,5 +123,45 @@ describe('checkVisible', function() {
 
         splideSlide.setAttribute('aria-hidden', 'false');
         expect(checkVisible(testElement)).toBe(true);
+    });
+
+    it('should treat elements above viewport as visible within prefetch margin', function() {
+        if (typeof Slazy.setPrefetchMargin !== 'function') {
+            pending('Prefetch margin API not available');
+        }
+
+        Slazy.setPrefetchMargin(150);
+        mockRect.top = -120;
+        mockRect.bottom = -20;
+
+        expect(checkVisible(testElement)).toBe(true);
+    });
+
+    it('should treat elements below viewport as visible within prefetch margin', function() {
+        if (typeof Slazy.setPrefetchMargin !== 'function') {
+            pending('Prefetch margin API not available');
+        }
+
+        const viewHeight = Math.max(
+            document.documentElement.clientHeight,
+            window.innerHeight
+        );
+        Slazy.setPrefetchMargin(200);
+        mockRect.top = viewHeight + 50;
+        mockRect.bottom = viewHeight + 150;
+
+        expect(checkVisible(testElement)).toBe(true);
+    });
+
+    it('should normalise invalid margin inputs to zero', function() {
+        if (typeof Slazy.setPrefetchMargin !== 'function') {
+            pending('Prefetch margin API not available');
+        }
+
+        Slazy.setPrefetchMargin(-100);
+        expect(Slazy.getPrefetchMargin()).toBe(0);
+
+        Slazy.setPrefetchMargin('42');
+        expect(Slazy.getPrefetchMargin()).toBe(42);
     });
 });
