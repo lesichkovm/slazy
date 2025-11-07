@@ -164,7 +164,7 @@ function loadLazyUrl() {
     return;
   }
 
-  if ($("*[data-slazy-url]:not(.image-loaded)").length === 0) {
+  if (jq("*[data-slazy-url]:not(.image-loaded)").length === 0) {
     clearInterval(loadingLazyUrl);
     return;
   }
