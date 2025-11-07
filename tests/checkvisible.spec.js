@@ -4,9 +4,6 @@ describe('checkVisible', function() {
     let fixture;
     let originalInnerHeightDescriptor;
     let originalClientHeightDescriptor;
-    let original$;
-    let jQueryStub;
-
     beforeEach(function() {
         fixture = document.createElement('div');
         document.body.appendChild(fixture);
@@ -39,24 +36,7 @@ describe('checkVisible', function() {
             value: 800
         });
 
-        original$ = window.$;
-        jQueryStub = {
-            hasClass: jasmine.createSpy('hasClass').and.returnValue(false),
-            closest: jasmine.createSpy('closest').and.returnValue({
-                attr: jasmine.createSpy('attr').and.returnValue(null)
-            }),
-            addClass: function(cls) {
-                testElement.className = (testElement.className + ' ' + cls).trim();
-                return this;
-            }
-        };
-
-        window.$ = jasmine.createSpy('$').and.callFake(function(el) {
-            if (el === testElement) {
-                return jQueryStub;
-            }
-            return typeof original$ === 'function' ? original$(el) : undefined;
-        });
+        testElement.className = '';
     });
 
     afterEach(function() {
@@ -75,13 +55,6 @@ describe('checkVisible', function() {
         } else {
             delete document.documentElement.clientHeight;
         }
-
-        if (typeof original$ === 'undefined') {
-            delete window.$;
-        } else {
-            window.$ = original$;
-        }
-        jQueryStub = null;
     });
 
     it('should return true for elements within viewport', function() {
@@ -105,47 +78,38 @@ describe('checkVisible', function() {
     });
 
     it('should handle carousel items correctly', function() {
-        jQueryStub.hasClass = jasmine.createSpy('hasClass').and.returnValue(true);
-        jQueryStub.closest = jasmine.createSpy('closest').and.callFake(function(selector) {
-            if (selector === '.carousel_item') {
-                return {
-                    attr: jasmine.createSpy('attr').and.returnValue('true')
-                };
-            }
-            return {
-                attr: jasmine.createSpy('attr').and.returnValue(null)
-            };
-        });
+        testElement.classList.add('carousel_item_image');
+        const carouselItem = document.createElement('div');
+        carouselItem.classList.add('carousel_item');
+        carouselItem.setAttribute('aria-hidden', 'true');
+        carouselItem.appendChild(testElement);
+        fixture.appendChild(carouselItem);
 
         expect(checkVisible(testElement)).toBe(false);
 
-        jQueryStub.closest = jasmine.createSpy('closest').and.callFake(function() {
-            return {
-                attr: jasmine.createSpy('attr').and.returnValue(null)
-            };
-        });
+        carouselItem.setAttribute('aria-hidden', 'false');
+        expect(checkVisible(testElement)).toBe(true);
+
+        carouselItem.removeAttribute('aria-hidden');
 
         expect(checkVisible(testElement)).toBe(true);
     });
 
     it('should handle splide slides correctly', function() {
-        jQueryStub.hasClass = jasmine.createSpy('hasClass').and.returnValue(true);
-        jQueryStub.closest = jasmine.createSpy('closest').and.callFake(function(selector) {
-            if (selector === '.carousel_item') {
-                return {
-                    attr: jasmine.createSpy('attr').and.returnValue(null)
-                };
-            }
-            if (selector === 'div.splide__slide') {
-                return {
-                    attr: jasmine.createSpy('attr').and.returnValue('true')
-                };
-            }
-            return {
-                attr: jasmine.createSpy('attr').and.returnValue(null)
-            };
-        });
+        testElement.classList.add('carousel_item_image');
+        const carouselItem = document.createElement('div');
+        carouselItem.classList.add('carousel_item');
+        carouselItem.appendChild(testElement);
+
+        const splideSlide = document.createElement('div');
+        splideSlide.classList.add('splide__slide');
+        splideSlide.setAttribute('aria-hidden', 'true');
+        splideSlide.appendChild(carouselItem);
+        fixture.appendChild(splideSlide);
 
         expect(checkVisible(testElement)).toBe(false);
+
+        splideSlide.setAttribute('aria-hidden', 'false');
+        expect(checkVisible(testElement)).toBe(true);
     });
 });

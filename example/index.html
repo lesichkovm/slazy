@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Slazy Demo</title>
+    <style>
+      body {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        margin: 0;
+        background: #f4f5f7;
+      }
+
+      header {
+        background: #1f2933;
+        color: #fff;
+        padding: 2rem 1.5rem;
+        text-align: center;
+      }
+
+      main {
+        padding: 2rem 1.5rem 4rem;
+        max-width: 960px;
+        margin: 0 auto;
+      }
+
+      section {
+        margin-bottom: 2.5rem;
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+        overflow: hidden;
+      }
+
+      section h2 {
+        margin: 0;
+        padding: 1rem 1.5rem 0;
+      }
+
+      section p {
+        padding: 0 1.5rem 1.5rem;
+        margin: 0;
+      }
+
+      .image-wrapper {
+        position: relative;
+      }
+
+      .image-wrapper img {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      .feature-card {
+        min-height: 280px;
+        display: grid;
+        place-items: center;
+        color: #fff;
+        font-size: 1.5rem;
+        font-weight: 600;
+        text-align: center;
+      }
+
+      footer {
+        text-align: center;
+        padding: 1.5rem;
+        color: #6b7280;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Slazy Example Page</h1>
+      <p>Scroll to see images and backgrounds upgrade themselves when they enter the viewport.</p>
+    </header>
+    <main>
+      <section>
+        <h2>Lazy &lt;img&gt; example</h2>
+        <p>
+          The hero image starts with a lightweight placeholder and is replaced with a full-size
+          version once Slazy detects it in view.
+        </p>
+        <div class="image-wrapper">
+          <img
+            src="https://via.placeholder.com/16x9?text=Loading"
+            data-slazy-src="https://via.placeholder.com/1200x675?text=Loaded+Hero"
+            alt="Lazy loaded hero"
+          />
+        </div>
+      </section>
+
+      <section>
+        <h2>Lazy background example</h2>
+        <p>
+          Any element can swap its background image. Slazy will resize the URL based on the element width
+          to avoid pulling unnecessarily large assets.
+        </p>
+        <div
+          class="feature-card"
+          style="background-image: url('https://via.placeholder.com/32x18/1f2933/ffffff?text=Loading');"
+          data-slazy-url="https://via.placeholder.com/960x540/2563eb/ffffff?text=Loaded+Background"
+        >
+          Loaded on demand
+        </div>
+      </section>
+
+      <section>
+        <h2>Carousel slide (mock)</h2>
+        <p>
+          Add the <code>carousel_item_image</code> class to defer loading until the parent slide is
+          visible. Toggle the <code>aria-hidden</code> attribute in your carousel implementation to control
+          when Slazy runs.
+        </p>
+        <div class="image-wrapper carousel_item" aria-hidden="true">
+          <img
+            class="carousel_item_image"
+            src="https://via.placeholder.com/32x18?text=Hidden"
+            data-slazy-src="https://via.placeholder.com/800x450?text=Active+Slide"
+            alt="Carousel slide"
+          />
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <small>Open the browser console to watch Slazy update attributes as you scroll.</small>
+    </footer>
+
+    <script src="../slazy.js"></script>
+  </body>
+</html>
