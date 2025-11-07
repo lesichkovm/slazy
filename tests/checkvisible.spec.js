@@ -4,12 +4,15 @@ describe('checkVisible', function() {
     let fixture;
     let originalInnerHeightDescriptor;
     let originalClientHeightDescriptor;
+    let checkVisible;
     beforeEach(function() {
         fixture = document.createElement('div');
         document.body.appendChild(fixture);
 
         testElement = document.createElement('img');
         fixture.appendChild(testElement);
+
+        checkVisible = Slazy.checkVisible;
 
         mockRect = {
             top: 100,

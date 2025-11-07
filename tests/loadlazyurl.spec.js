@@ -3,6 +3,8 @@ describe('loadLazyUrl', function() {
     let originalSetInterval;
     let originalClearInterval;
     let originalCheckVisible;
+    let loadLazyUrl;
+    let internals;
 
     function stubRect(element, rect = {}) {
         const widthValue = Object.prototype.hasOwnProperty.call(rect, 'width') ? rect.width : 100;
@@ -85,16 +87,21 @@ describe('loadLazyUrl', function() {
         fixture = document.createElement('div');
         document.body.appendChild(fixture);
 
+        Slazy.stop();
+
+        loadLazyUrl = Slazy.loadLazyUrl;
+        internals = Slazy._internals;
+
         originalSetInterval = window.setInterval;
         originalClearInterval = window.clearInterval;
         window.setInterval = jasmine.createSpy('setInterval');
         window.clearInterval = jasmine.createSpy('clearInterval');
 
-        originalCheckVisible = window.checkVisible;
-        window.checkVisible = jasmine.createSpy('checkVisible').and.returnValue(true);
+        originalCheckVisible = Slazy.checkVisible;
+        spyOn(Slazy, 'checkVisible').and.returnValue(true);
 
-        loadingLazyUrl = undefined;
-        loadingLazyImages = undefined;
+        internals.imageInterval = null;
+        internals.urlInterval = null;
     });
 
     afterEach(function() {
@@ -105,18 +112,16 @@ describe('loadLazyUrl', function() {
         window.setInterval = originalSetInterval;
         window.clearInterval = originalClearInterval;
 
-        if (typeof originalCheckVisible === 'undefined') {
-            delete window.checkVisible;
-        } else {
-            window.checkVisible = originalCheckVisible;
-        }
+        Slazy.checkVisible = originalCheckVisible;
         originalCheckVisible = undefined;
+        Slazy.stop();
     });
 
     it('should do nothing if no lazy URLs found', function() {
-        loadingLazyUrl = 'lazy-url-handle';
+        internals.urlInterval = 'lazy-url-handle';
         loadLazyUrl();
         expect(window.clearInterval).toHaveBeenCalledWith('lazy-url-handle');
+        expect(internals.urlInterval).toBeNull();
     });
 
     it('should skip elements without real width', function() {
@@ -153,7 +158,7 @@ describe('loadLazyUrl', function() {
     });
 
     it('should not process elements when checkVisible returns false', function() {
-        window.checkVisible.and.returnValue(false);
+        Slazy.checkVisible.and.returnValue(false);
         const element = createLazyElement({ widthStyle: '120px' });
 
         loadLazyUrl();

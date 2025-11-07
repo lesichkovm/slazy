@@ -5,6 +5,8 @@ describe('loadLazyImage', function() {
     let originalImage;
     let originalCheckVisible;
     let createdImages;
+    let loadLazyImage;
+    let internals;
 
     function stubRect(element, rect = {}) {
         const widthValue = Object.prototype.hasOwnProperty.call(rect, 'width') ? rect.width : 100;
@@ -77,6 +79,11 @@ describe('loadLazyImage', function() {
         fixture = document.createElement('div');
         document.body.appendChild(fixture);
 
+        Slazy.stop();
+
+        loadLazyImage = Slazy.loadLazyImage;
+        internals = Slazy._internals;
+
         originalSetInterval = window.setInterval;
         originalClearInterval = window.clearInterval;
         window.setInterval = jasmine.createSpy('setInterval');
@@ -90,10 +97,11 @@ describe('loadLazyImage', function() {
             return mock;
         });
 
-        originalCheckVisible = window.checkVisible;
-        window.checkVisible = jasmine.createSpy('checkVisible').and.returnValue(true);
+        originalCheckVisible = Slazy.checkVisible;
+        spyOn(Slazy, 'checkVisible').and.returnValue(true);
 
-        loadingLazyImages = undefined;
+        internals.imageInterval = null;
+        internals.urlInterval = null;
     });
 
     afterEach(function() {
@@ -105,18 +113,17 @@ describe('loadLazyImage', function() {
         window.clearInterval = originalClearInterval;
         window.Image = originalImage;
 
-        if (typeof originalCheckVisible === 'undefined') {
-            delete window.checkVisible;
-        } else {
-            window.checkVisible = originalCheckVisible;
-        }
+        Slazy.checkVisible = originalCheckVisible;
         originalCheckVisible = undefined;
+        Slazy.stop();
         createdImages = [];
     });
 
     it('should do nothing if no lazy images found', function() {
+        internals.imageInterval = 'lazy-images-handle';
         loadLazyImage();
-        expect(window.clearInterval).toHaveBeenCalledWith(loadingLazyImages);
+        expect(window.clearInterval).toHaveBeenCalledWith('lazy-images-handle');
+        expect(internals.imageInterval).toBeNull();
         expect(createdImages.length).toBe(0);
     });
 
@@ -175,7 +182,7 @@ describe('loadLazyImage', function() {
     });
 
     it('should not process images when checkVisible returns false', function() {
-        window.checkVisible.and.returnValue(false);
+        Slazy.checkVisible.and.returnValue(false);
         createImageElement();
 
         loadLazyImage();
