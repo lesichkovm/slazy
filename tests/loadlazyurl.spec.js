@@ -3,6 +3,8 @@ describe('loadLazyUrl', function() {
     let originalSetInterval;
     let originalClearInterval;
     let originalCheckVisible;
+    let originalImage;
+    let createdImages;
     let loadLazyUrl;
     let internals;
 
@@ -100,6 +102,14 @@ describe('loadLazyUrl', function() {
         originalCheckVisible = Slazy.checkVisible;
         spyOn(Slazy, 'checkVisible').and.returnValue(true);
 
+        createdImages = [];
+        originalImage = window.Image;
+        window.Image = jasmine.createSpy('Image').and.callFake(function() {
+            const mock = { onload: null, onerror: null, src: '' };
+            createdImages.push(mock);
+            return mock;
+        });
+
         internals.imageInterval = null;
         internals.urlInterval = null;
     });
@@ -114,6 +124,8 @@ describe('loadLazyUrl', function() {
 
         Slazy.checkVisible = originalCheckVisible;
         originalCheckVisible = undefined;
+        window.Image = originalImage;
+        createdImages = [];
         Slazy.stop();
     });
 
@@ -141,9 +153,31 @@ describe('loadLazyUrl', function() {
 
         loadLazyUrl();
 
+        expect(createdImages.length).toBe(1);
+        const mock = createdImages[0];
+        expect(mock.src).toBe('background-150x0.jpg');
+
+        mock.onload();
+
         expect(element.dataset.queue).toBe('loaded');
         expect(element.style.backgroundImage).toContain('background-150x0.jpg');
         expect(element.classList.contains('image-loaded')).toBe(true);
+    });
+
+    it('should reset queue markers when background load fails', function() {
+        const element = createLazyElement({ widthStyle: '140px' });
+
+        loadLazyUrl();
+
+        expect(createdImages.length).toBe(1);
+        const mock = createdImages[0];
+        expect(element.dataset.queue).toBe('loading');
+
+        mock.onerror();
+
+        expect(element.dataset.queue).toBeUndefined();
+        expect(element.style.backgroundImage).toBe('');
+        expect(element.classList.contains('image-loaded')).toBe(false);
     });
 
     it('should use parent width when element width is percentage based', function() {
@@ -152,6 +186,12 @@ describe('loadLazyUrl', function() {
         const element = createLazyElement({ widthStyle: '100%', rectWidth: 0, parent: parent });
 
         loadLazyUrl();
+
+        expect(createdImages.length).toBe(1);
+        const mock = createdImages[0];
+        expect(mock.src).toBe('background-250x0.jpg');
+
+        mock.onload();
 
         expect(element.style.backgroundImage).toContain('background-250x0.jpg');
         expect(element.dataset.queue).toBe('loaded');
@@ -192,6 +232,12 @@ describe('loadLazyUrl', function() {
 
         loadLazyUrl();
 
+        expect(createdImages.length).toBe(1);
+        const mock = createdImages[0];
+        expect(mock.src).toBe('background-180x0.jpg');
+
+        mock.onload();
+
         expect(element.style.backgroundImage).toContain('background-180x0.jpg');
     });
 
@@ -206,6 +252,13 @@ describe('loadLazyUrl', function() {
 
         loadLazyUrl();
 
+        expect(createdImages.length).toBe(1);
+        const mock = createdImages[0];
+        expect(mock.src).toContain('w=200');
+        expect(mock.src).toContain('h=0');
+
+        mock.onload();
+
         expect(element.style.backgroundImage).toContain('w=200');
         expect(element.style.backgroundImage).toContain('h=0');
     });
@@ -214,6 +267,12 @@ describe('loadLazyUrl', function() {
         const element = createLazyElement({ classList: ['no-resize'], widthStyle: '180px' });
 
         loadLazyUrl();
+
+        expect(createdImages.length).toBe(1);
+        const mock = createdImages[0];
+        expect(mock.src).toBe('background-640x480.jpg');
+
+        mock.onload();
 
         expect(element.style.backgroundImage).toContain('background-640x480.jpg');
     });

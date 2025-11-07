@@ -58,6 +58,33 @@
         height: auto;
       }
 
+      /* BlurHash placeholder overlay to show decoded canvas before the image upgrades. */
+      .blurhash-wrapper {
+        position: relative;
+        background: #111827;
+        border-radius: 8px;
+      }
+
+      .blurhash-wrapper canvas {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border-radius: inherit;
+        pointer-events: none;
+        transition: opacity 0.35s ease;
+        z-index: 0;
+      }
+
+      .blurhash-wrapper img {
+        position: relative;
+        z-index: 1;
+      }
+
+      .blurhash-hidden {
+        opacity: 0;
+      }
+
       .feature-card {
         min-height: 280px;
         display: grid;
@@ -117,6 +144,29 @@
             src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png"
             data-slazy-src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&h=900&q=80"
             alt="Lazy loaded hero"
+          />
+        </div>
+      </section>
+
+      <section>
+        <h2>BlurHash placeholder example</h2>
+        <p>
+          Combine Slazy with <a href="https://blurha.sh/" target="_blank" rel="noreferrer">BlurHash</a>
+          to paint a smooth, decoded placeholder on a canvas while the real image is loading. The canvas
+          fades away once Slazy swaps in the full-resolution asset.
+        </p>
+        <div class="image-wrapper blurhash-wrapper">
+          <canvas
+            class="blurhash-canvas"
+            data-blurhash="LEHV6nWB2yk8pyo0adR*.7kCMdnj"
+            width="32"
+            height="32"
+            aria-hidden="true"
+          ></canvas>
+          <img
+            src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png"
+            data-slazy-src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&h=900&q=80"
+            alt="BlurHash placeholder swapping to a mountain landscape"
           />
         </div>
       </section>
@@ -257,6 +307,62 @@
       </small>
     </footer>
 
+    <script src="https://cdn.jsdelivr.net/npm/blurhash@1.1.4/dist/blurhash.min.js"></script>
+    <script>
+      // Decode BlurHash strings into canvases so visitors see a soft preview before Slazy promotes the full image.
+      document.addEventListener("DOMContentLoaded", function () {
+        const blurhashApi = typeof blurhash === "object" ? blurhash : null;
+
+        if (!blurhashApi || typeof blurhashApi.decode !== "function") {
+          return;
+        }
+
+        document.querySelectorAll("canvas[data-blurhash]").forEach(function (canvas) {
+          const hash = canvas.dataset.blurhash;
+
+          if (!hash) {
+            return;
+          }
+
+          const width = Number(canvas.getAttribute("width")) || 32;
+          const height = Number(canvas.getAttribute("height")) || 32;
+          const context = canvas.getContext("2d");
+
+          if (!context) {
+            return;
+          }
+
+          // Ensure the canvas internal bitmap matches the decode dimensions for crisp scaling.
+          canvas.width = width;
+          canvas.height = height;
+
+          // Decode the BlurHash string into raw RGBA pixels and paint them onto the canvas.
+          const pixels = blurhashApi.decode(hash, width, height);
+          const imageData = context.createImageData(width, height);
+          imageData.data.set(pixels);
+          context.putImageData(imageData, 0, 0);
+
+          const parent = canvas.closest(".blurhash-wrapper");
+          const targetImage = parent ? parent.querySelector("img[data-slazy-src]") : null;
+
+          if (!targetImage) {
+            return;
+          }
+
+          // Fade the canvas placeholder away once the high-resolution asset is ready.
+          const hidePlaceholder = function () {
+            canvas.classList.add("blurhash-hidden");
+          };
+
+          if (targetImage.complete && targetImage.naturalWidth > 0) {
+            hidePlaceholder();
+            return;
+          }
+
+          targetImage.addEventListener("load", hidePlaceholder, { once: true });
+        });
+      });
+    </script>
     <script src="../slazy.js"></script>
     <script
       src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"

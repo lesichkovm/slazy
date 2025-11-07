@@ -630,9 +630,18 @@
         }
 
         if (api.checkVisible(element)) {
-          setData(element, "queue", "loaded");
-          setBackgroundImage(element, `url(${url})`);
-          addClass(element, "image-loaded");
+          setData(element, "queue", "loading");
+          const self = element;
+          const img = new Image();
+          img.onload = function () {
+            setBackgroundImage(self, `url(${this.src})`);
+            setData(self, "queue", "loaded");
+            addClass(self, "image-loaded");
+          };
+          img.onerror = function () {
+            removeData(self, "queue");
+          };
+          img.src = url;
         }
       }
     );
