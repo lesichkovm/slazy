@@ -346,13 +346,13 @@ function loadLazyImage() {
         return;
       }
 
-      let url = jq(this).data("slazy-src");
+      let url = getData(element, "slazy-src");
 
-      if (typeof url === "undefined") {
+      if (url == null) {
         return;
       }
 
-      const noResize = jq(this).hasClass("no-resize");
+      const noResize = hasClass(element, "no-resize");
       if (noResize === false) {
         const resizedUrl = url.replace(/\d+x\d+/i, realWidth + "x0");
         url = resizedUrl;
@@ -360,32 +360,40 @@ function loadLazyImage() {
 
       // DEBUG:  console.log('URL to process:' + url);
 
-      if (this.src === url) {
+      if (element.src === url) {
         return; //already processed
       }
 
-      if (typeof jq(this).data("queue") !== "undefined") {
+      if (getData(element, "queue") != null) {
         return; //already processed
       }
 
-      if (checkVisible(this)) {
-        jq(this).data("queue", "loading");
-        var self = this;
+      if (checkVisible(element)) {
+        setData(element, "queue", "loading");
+        var self = element;
         var newImg = new Image();
         newImg.onload = function () {
           self.src = this.src;
-          jq(self).data("queue", "loaded");
+          setData(self, "queue", "loaded");
           const widthValue = Number(
             this.width || this.naturalWidth || realWidth || 0
           );
           const heightValue = Number(
             this.height || this.naturalHeight || 0
           );
-          jq(self).attr("width", widthValue);
-          jq(self).attr("height", heightValue);
+          if (typeof self.setAttribute === "function") {
+            self.setAttribute("width", widthValue);
+            self.setAttribute("height", heightValue);
+          } else {
+            const jqSelf = getJq();
+            if (jqSelf) {
+              jqSelf(self).attr("width", widthValue);
+              jqSelf(self).attr("height", heightValue);
+            }
+          }
+          addClass(self, "image-loaded");
         };
         newImg.src = url;
-        jq(this).addClass("image-loaded");
       }
     }
   );
