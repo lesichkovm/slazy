@@ -712,7 +712,14 @@
     },
   };
 
-  startPolling();
+  const hasDomAccess =
+    typeof document !== "undefined" &&
+    typeof document.querySelectorAll === "function" &&
+    typeof window !== "undefined";
+
+  if (hasDomAccess) {
+    startPolling();
+  }
 
   return api;
 });
