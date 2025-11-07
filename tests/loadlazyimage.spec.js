@@ -221,6 +221,22 @@ describe('loadLazyImage', function() {
         expect(createdImages[0].src).toBe('image-100x0.jpg');
     });
 
+    it('should resize Unsplash-style query parameters for images', function() {
+        const element = createImageElement({
+            dataset: {
+                'slazy-src': 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1600&h=1000&q=80'
+            },
+            rectWidth: 240,
+            widthStyle: '240px'
+        });
+
+        loadLazyImage();
+
+        expect(createdImages.length).toBe(1);
+        expect(createdImages[0].src).toContain('w=240');
+        expect(createdImages[0].src).toContain('h=0');
+    });
+
     it('should not resize URLs when no-resize class is present', function() {
         createImageElement({ dataset: { 'slazy-src': 'image-640x480.jpg' }, classList: ['no-resize'] });
 

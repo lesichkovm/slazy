@@ -137,6 +137,36 @@ function isDomElement(value) {
   return value && typeof value === "object" && value.nodeType === 1;
 }
 
+// Resizes service-style image URLs so providers like Unsplash receive the
+// element width. We rewrite classic WxH tokens and common query params.
+function resizeUrlForWidth(originalUrl, width) {
+  if (!originalUrl || width <= 0) {
+    return originalUrl;
+  }
+
+  let url = originalUrl;
+  let widthAdjusted = false;
+
+  // Replace classic filename tokens like image-640x480.jpg.
+  if (/\d+x\d+/i.test(url)) {
+    url = url.replace(/\d+x\d+/i, `${width}x0`);
+    widthAdjusted = true;
+  }
+
+  // Update query parameters that express width (w or width=).
+  if (/[?&](w|width)=\d+/i.test(url)) {
+    url = url.replace(/([?&])(w|width)=\d+/gi, (match, separator, key) => `${separator}${key}=${width}`);
+    widthAdjusted = true;
+  }
+
+  // Neutralise any fixed height so services honour the width-based aspect ratio.
+  if (widthAdjusted && /[?&](h|height)=\d+/i.test(url)) {
+    url = url.replace(/([?&])(h|height)=\d+/gi, (match, separator, key) => `${separator}${key}=0`);
+  }
+
+  return url;
+}
+
 function getStyleValue(element, property) {
   if (!element) {
     return "";
@@ -288,8 +318,7 @@ function loadLazyImage() {
 
       const noResize = hasClass(element, "no-resize");
       if (noResize === false) {
-        const resizedUrl = url.replace(/\d+x\d+/i, realWidth + "x0");
-        url = resizedUrl;
+        url = resizeUrlForWidth(url, realWidth);
       }
 
       // DEBUG:  console.log('URL to process:' + url);
@@ -370,8 +399,7 @@ function loadLazyUrl() {
 
       const noResize = hasClass(element, "no-resize");
       if (noResize === false) {
-        const resizedUrl = url.replace(/\d+x\d+/i, realWidth + "x0");
-        url = resizedUrl;
+        url = resizeUrlForWidth(url, realWidth);
       }
 
       // DEBUG:  console.log('URL to process:' + url);

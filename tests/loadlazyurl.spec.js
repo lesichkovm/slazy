@@ -190,6 +190,21 @@ describe('loadLazyUrl', function() {
         expect(element.style.backgroundImage).toContain('background-180x0.jpg');
     });
 
+    it('should resize Unsplash-style query parameters for backgrounds', function() {
+        const element = createLazyElement({
+            widthStyle: '200px',
+            rectWidth: 200,
+            dataset: {
+                'slazy-url': 'https://images.unsplash.com/photo-1523924836160-1f772f174db9?auto=format&fit=crop&w=1600&h=1000&q=80'
+            }
+        });
+
+        loadLazyUrl();
+
+        expect(element.style.backgroundImage).toContain('w=200');
+        expect(element.style.backgroundImage).toContain('h=0');
+    });
+
     it('should not resize URLs when no-resize class is present', function() {
         const element = createLazyElement({ classList: ['no-resize'], widthStyle: '180px' });
 

@@ -8,30 +8,28 @@ Slazy provides a lightweight helper for progressively loading images and backgro
 
 ## Features
 
-- Detects whether an element is currently visible in the viewport, including special handling for Slick and Splide carousels.
-- Upgrades `<img>` tags from a placeholder `data-slazy-src` to the real image once visible.
-- Replaces background images stored in `data-slazy-url` with the correct asset when the element scrolls into view.
-- Avoids redundant processing by tracking queued and loaded elements via `data-queue` and `.image-loaded` markers.
+- Detects when an element becomes visible in the viewport, including special handling for Slick/Splide carousels that hide slides with `aria-hidden`.
+- Upgrades `<img>` tags from a lightweight placeholder (`src`) to the full asset stored in `data-slazy-src` once visible.
+- Replaces background images stored in `data-slazy-url` while optionally resizing the URL to match the element width.
+- Avoids redundant work by tracking queued and completed elements via `data-queue` and the `.image-loaded` marker class.
 
-## Getting Started
+## Installation
 
-1. Include `slazy.js` in your bundle or load it with a `<script>` tag.
-2. Add the `data-slazy-src` attribute to any `<img>` that should lazy-load, or `data-slazy-url` to elements that should swap their background images.
-
-## Slazy CDN
-
-If you need to include the Slazy helper from a CDN, you can either pull
-the latest build or lock to a specific version:
+### Script tag (CDN)
 
 ```html
 <!-- Load latest Slazy from CDN -->
 <script src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/slazy.min.js"></script>
 
-<!-- Load specific version of Slazy from CDN -->
-<script src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@v2.9.0/dist/slazy.min.js"></script>
+<!-- Lock to a specific release -->
+<script src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@v3.0.0/dist/slazy.min.js"></script>
 ```
 
-## Usage
+### Bundler
+
+Download `slazy.js`, drop it into your project, and import it from your bundle entry point. Slazy registers itself on load, so no explicit initialisation call is required.
+
+## Quick Start
 
 ```html
 <!-- Example image lazy loading -->
@@ -50,7 +48,74 @@ the latest build or lock to a specific version:
 ></div>
 ```
 
-The library scans matching elements at a one-second interval. When an element becomes visible, Slazy swaps the placeholder with the real asset and marks it as loaded, preventing duplicate work.
+Add `data-slazy-src` (for `<img>`) or `data-slazy-url` (for any element with a background) and include `slazy.js`. Slazy polls the DOM every second, and the first time an element is visible it swaps the placeholder with the real asset and marks the node with `.image-loaded`.
+
+## Resizing behaviour
+
+When Slazy upgrades an asset it optionally rewrites any `WxH` token in the URL with the measured element width: `640x480` becomes `250x0` if the element is 250 px wide. This lets you serve responsive variants via URL-driven resizing services.
+
+- **Images**: the width is derived from the element itself, falling back to the parent width when the image uses percentage-based sizing.
+- **Backgrounds**: the width is taken from the element or its parent using the same logic.
+
+If your URLs do not contain a `WxH` component, nothing is replaced—the original URL is used as-is.
+
+## Opting out with `no-resize`
+
+Add the `no-resize` class when you need to keep the original URL untouched—for example when your asset pipeline does not support width substitution.
+
+```html
+<img
+  class="product no-resize"
+  src="/img/placeholder.jpg"
+  data-slazy-src="/img/product-original.jpg"
+  alt="Product"
+/>
+
+<div
+  class="hero-banner no-resize"
+  style="background-image: url('/img/placeholder-bg.jpg');"
+  data-slazy-url="/img/hero-original.jpg"
+></div>
+```
+
+The element will still lazy load, but the `data-slazy-*` URL is used verbatim.
+
+## Carousel support
+
+If you are using Slick or Splide carousels, add the `carousel_item_image` class to the lazy element. Slazy will inspect parents with `.carousel_item` or `div.splide__slide` and defer loading until ancestors stop advertising `aria-hidden="true"`.
+
+```html
+<div class="carousel_item" aria-hidden="true">
+  <img
+    class="carousel_item_image"
+    src="/img/placeholder.jpg"
+    data-slazy-src="/img/carousel-slide.jpg"
+    alt="Slide"
+  />
+</div>
+```
+
+## Demo & examples
+
+Open `example/index.html` for a self-contained demo illustrating:
+
+- Standard image and background lazy loading.
+- The `no-resize` modifier for both images and backgrounds.
+- Carousel-specific behaviour with `aria-hidden` toggling.
+
+## Development
+
+Clone the repository and install any build dependencies required by your pipeline. The core library is plain ES5-compatible JavaScript and needs no bundler for direct usage.
+
+## Testing
+
+The Jasmine specs cover visibility helpers, image loading, background loading, and resizing edge cases. After editing the library run:
+
+```bash
+npm test
+```
+
+This executes the 26 DOM-based specs under `tests/`.
 
 ## Carousel Support
 
