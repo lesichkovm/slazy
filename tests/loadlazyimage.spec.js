@@ -326,4 +326,26 @@ describe('loadLazyImage', function() {
         expect(createdImages.length).toBe(1);
         expect(createdImages[0].src).toBe('image-200x100.jpg');
     });
+
+    it('should apply and clear placeholder styling when slazy-placeholder is present', function() {
+        const img = createImageElement({ classList: ['slazy-placeholder'], rectWidth: 180, widthStyle: '180px' });
+
+        expect(img.style.backgroundColor).toBe('');
+
+        loadLazyImage();
+
+        expect(createdImages.length).toBe(1);
+        expect(img.dataset.placeholderActive).toBe('true');
+        expect(img.classList.contains('slazy-placeholder-active')).toBe(true);
+        expect(img.style.backgroundColor).not.toBe('');
+
+        const mock = createdImages[0];
+        mock.width = 180;
+        mock.height = 90;
+        mock.onload();
+
+        expect(img.dataset.placeholderActive).toBeUndefined();
+        expect(img.classList.contains('slazy-placeholder-active')).toBe(false);
+        expect(img.style.backgroundColor).toBe('');
+    });
 });

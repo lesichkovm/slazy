@@ -120,6 +120,36 @@
         font-weight: 500;
       }
 
+      .source-panel {
+        border-top: 1px solid #e5e7eb;
+        background: #f9fafb;
+      }
+
+      .source-panel summary {
+        cursor: pointer;
+        display: block;
+        padding: 0.75rem 1.5rem;
+        color: #2563eb;
+        font-weight: 600;
+        text-decoration: underline;
+        list-style: none;
+      }
+
+      .source-panel summary::marker,
+      .source-panel summary::-webkit-details-marker {
+        display: none;
+      }
+
+      .source-panel pre {
+        margin: 0;
+        padding: 0 1.5rem 1.5rem;
+        white-space: pre-wrap;
+        word-break: break-word;
+        font-family: "Fira Code", "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+        font-size: 0.85rem;
+        line-height: 1.4;
+      }
+
       footer {
         text-align: center;
         padding: 1.5rem;
@@ -141,13 +171,25 @@
         </p>
         <div class="image-wrapper">
           <img
-            class="slazy-resize"
+            class="slazy-resize slazy-placeholder"
             src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png"
             data-slazy-src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&h=900&q=80"
             data-slazy-height="900"
             alt="Lazy loaded hero"
           />
         </div>
+        <details class="source-panel">
+          <summary>Source</summary>
+          <pre><code>&lt;div class="image-wrapper"&gt;
+  &lt;img
+    class="slazy-resize slazy-placeholder"
+    src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png"
+    data-slazy-src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&amp;fit=crop&amp;w=1600&amp;h=900&amp;q=80"
+    data-slazy-height="900"
+    alt="Lazy loaded hero"
+  /&gt;
+&lt;/div&gt;</code></pre>
+        </details>
       </section>
 
       <section>
@@ -166,13 +208,32 @@
             aria-hidden="true"
           ></canvas>
           <img
-            class="slazy-resize"
+            class="slazy-resize slazy-placeholder"
             src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png"
             data-slazy-src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&h=900&q=80"
             data-slazy-height="900"
             alt="BlurHash placeholder swapping to a mountain landscape"
           />
         </div>
+        <details class="source-panel">
+          <summary>Source</summary>
+          <pre><code>&lt;div class="image-wrapper blurhash-wrapper"&gt;
+  &lt;canvas
+    class="blurhash-canvas"
+    data-blurhash="LEHV6nWB2yk8pyo0adR*.7kCMdnj"
+    width="32"
+    height="32"
+    aria-hidden="true"
+  &gt;&lt;/canvas&gt;
+  &lt;img
+    class="slazy-resize slazy-placeholder"
+    src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png"
+    data-slazy-src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&amp;fit=crop&amp;w=1600&amp;h=900&amp;q=80"
+    data-slazy-height="900"
+    alt="BlurHash placeholder swapping to a mountain landscape"
+  /&gt;
+&lt;/div&gt;</code></pre>
+        </details>
       </section>
 
       <section>
@@ -182,13 +243,98 @@
           to avoid pulling unnecessarily large assets.
         </p>
         <div
-          class="feature-card slazy-resize"
+          class="feature-card slazy-resize slazy-placeholder"
           style="background-image: url('https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png');"
           data-slazy-url="https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1600&h=900&q=80"
           data-slazy-height="900"
         >
           Loaded on demand
         </div>
+        <details class="source-panel">
+          <summary>Source</summary>
+          <pre><code>&lt;div
+  class="feature-card slazy-resize slazy-placeholder"
+  style="background-image: url('https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png');"
+  data-slazy-url="https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&amp;fit=crop&amp;w=1600&amp;h=900&amp;q=80"
+  data-slazy-height="900"
+&gt;
+  Loaded on demand
+&lt;/div&gt;</code></pre>
+        </details>
+      </section>
+
+      <section>
+        <h2>Placeholder showcase</h2>
+        <p>
+          Elements with the <code>.slazy-placeholder</code> class receive an automatic neutral background while the real asset is loading. This keeps layouts visually stable even before images arrive.
+        </p>
+        <div class="gallery-grid">
+          <figure class="gallery-card">
+            <img
+              class="slazy-resize slazy-placeholder"
+              src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png"
+              data-slazy-src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&h=800&q=80"
+              data-slazy-height="800"
+              alt="Placeholder demo image"
+            />
+            <figcaption>Image placeholder: neutral fill until the photo loads.</figcaption>
+          </figure>
+          <figure class="gallery-card">
+            <div
+              class="feature-card slazy-placeholder"
+              data-slazy-url="https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&fit=crop&w=1200&h=800&q=80"
+            >
+              Background placeholder in action
+            </div>
+            <figcaption>Background placeholder: keeps contrast readable before the hero arrives.</figcaption>
+          </figure>
+          <figure class="gallery-card">
+            <div class="feature-card" style="background-color: #d1d5db;">
+              <img
+                class="slazy-resize slazy-placeholder"
+                src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png"
+                data-slazy-src="https://images.unsplash.com/photo-1482192597420-4817fdd7e8b0?auto=format&fit=crop&w=1200&h=800&q=80"
+                alt="Custom color placeholder"
+              />
+            </div>
+            <figcaption>Custom colour: Slazy keeps your own background if provided.</figcaption>
+          </figure>
+        </div>
+        <details class="source-panel">
+          <summary>Source</summary>
+          <pre><code>&lt;div class="gallery-grid"&gt;
+  &lt;figure class="gallery-card"&gt;
+    &lt;img
+      class="slazy-resize slazy-placeholder"
+      src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png"
+      data-slazy-src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&amp;fit=crop&amp;w=1200&amp;h=800&amp;q=80"
+      data-slazy-height="800"
+      alt="Placeholder demo image"
+    /&gt;
+    &lt;figcaption&gt;Image placeholder: neutral fill until the photo loads.&lt;/figcaption&gt;
+  &lt;/figure&gt;
+  &lt;figure class="gallery-card"&gt;
+    &lt;div
+      class="feature-card slazy-placeholder"
+      data-slazy-url="https://images.unsplash.com/photo-1489515217757-5fd1be406fef?auto=format&amp;fit=crop&amp;w=1200&amp;h=800&amp;q=80"
+    &gt;
+      Background placeholder in action
+    &lt;/div&gt;
+    &lt;figcaption&gt;Background placeholder: keeps contrast readable before the hero arrives.&lt;/figcaption&gt;
+  &lt;/figure&gt;
+  &lt;figure class="gallery-card"&gt;
+    &lt;div class="feature-card" style="background-color: #d1d5db;"&gt;
+      &lt;img
+        class="slazy-resize slazy-placeholder"
+        src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png"
+        data-slazy-src="https://images.unsplash.com/photo-1482192597420-4817fdd7e8b0?auto=format&amp;fit=crop&amp;w=1200&amp;h=800&amp;q=80"
+        alt="Custom color placeholder"
+      /&gt;
+    &lt;/div&gt;
+    &lt;figcaption&gt;Custom colour: Slazy keeps your own background if provided.&lt;/figcaption&gt;
+  &lt;/figure&gt;
+&lt;/div&gt;</code></pre>
+        </details>
       </section>
 
       <section>
@@ -201,7 +347,7 @@
         <div class="gallery-grid">
           <figure class="gallery-card">
             <img
-              class="slazy-resize"
+              class="slazy-resize slazy-placeholder"
               src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png"
               data-slazy-src="https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&fit=crop&w=1600&h=1000&q=80"
               data-slazy-height="1000"
@@ -211,7 +357,7 @@
           </figure>
           <figure class="gallery-card">
             <img
-              class="slazy-no-resize"
+              class="slazy-no-resize slazy-placeholder"
               src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png"
               data-slazy-src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1600&h=1000&q=80"
               alt="Snowy mountains"
@@ -220,12 +366,43 @@
           </figure>
         </div>
         <div
-          class="feature-card slazy-no-resize"
+          class="feature-card slazy-no-resize slazy-placeholder"
           style="background-image: url('https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png');"
           data-slazy-url="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&h=900&q=80"
         >
           Background with <code>no-resize</code>
         </div>
+        <details class="source-panel">
+          <summary>Source</summary>
+          <pre><code>&lt;div class="gallery-grid"&gt;
+  &lt;figure class="gallery-card"&gt;
+    &lt;img
+      class="slazy-resize slazy-placeholder"
+      src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png"
+      data-slazy-src="https://images.unsplash.com/photo-1545239351-1141bd82e8a6?auto=format&amp;fit=crop&amp;w=1600&amp;h=1000&amp;q=80"
+      data-slazy-height="1000"
+      alt="Mountain field"
+    /&gt;
+    &lt;figcaption&gt;Default behaviour: resizes to the element width.&lt;/figcaption&gt;
+  &lt;/figure&gt;
+  &lt;figure class="gallery-card"&gt;
+    &lt;img
+      class="slazy-no-resize slazy-placeholder"
+      src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png"
+      data-slazy-src="https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&amp;fit=crop&amp;w=1600&amp;h=1000&amp;q=80"
+      alt="Snowy mountains"
+    /&gt;
+    &lt;figcaption&gt;&lt;code&gt;slazy-no-resize&lt;/code&gt;: keeps the original source dimensions.&lt;/figcaption&gt;
+  &lt;/figure&gt;
+&lt;/div&gt;
+&lt;div
+  class="feature-card slazy-no-resize slazy-placeholder"
+  style="background-image: url('https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png');"
+  data-slazy-url="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&amp;fit=crop&amp;w=1600&amp;h=900&amp;q=80"
+&gt;
+  Background with &lt;code&gt;no-resize&lt;/code&gt;
+&lt;/div&gt;</code></pre>
+        </details>
       </section>
 
       <section>
@@ -237,7 +414,7 @@
         <div class="gallery-grid">
           <figure class="gallery-card">
             <img
-              class="slazy-resize"
+              class="slazy-resize slazy-placeholder"
               src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png"
               data-slazy-src="https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&fit=crop&w=1600&h=1000&q=80"
               data-slazy-height="1000"
@@ -247,7 +424,7 @@
           </figure>
           <figure class="gallery-card">
             <img
-              class="slazy-resize"
+              class="slazy-resize slazy-placeholder"
               src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png"
               data-slazy-src="https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&fit=crop&w=1600&h=1000&q=80"
               data-slazy-height="1000"
@@ -257,7 +434,7 @@
           </figure>
           <figure class="gallery-card">
             <img
-              class="slazy-resize"
+              class="slazy-resize slazy-placeholder"
               src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png"
               data-slazy-src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1600&h=1000&q=80"
               data-slazy-height="1000"
@@ -266,6 +443,41 @@
             <figcaption>Waves meeting the sunset</figcaption>
           </figure>
         </div>
+        <details class="source-panel">
+          <summary>Source</summary>
+          <pre><code>&lt;div class="gallery-grid"&gt;
+  &lt;figure class="gallery-card"&gt;
+    &lt;img
+      class="slazy-resize slazy-placeholder"
+      src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png"
+      data-slazy-src="https://images.unsplash.com/photo-1470770841072-f978cf4d019e?auto=format&amp;fit=crop&amp;w=1600&amp;h=1000&amp;q=80"
+      data-slazy-height="1000"
+      alt="Misty forest trail"
+    /&gt;
+    &lt;figcaption&gt;Morning fog over the pines&lt;/figcaption&gt;
+  &lt;/figure&gt;
+  &lt;figure class="gallery-card"&gt;
+    &lt;img
+      class="slazy-resize slazy-placeholder"
+      src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png"
+      data-slazy-src="https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&amp;fit=crop&amp;w=1600&amp;h=1000&amp;q=80"
+      data-slazy-height="1000"
+      alt="City skyline at dusk"
+    /&gt;
+    &lt;figcaption&gt;City lights at golden hour&lt;/figcaption&gt;
+  &lt;/figure&gt;
+  &lt;figure class="gallery-card"&gt;
+    &lt;img
+      class="slazy-resize slazy-placeholder"
+      src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png"
+      data-slazy-src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&amp;fit=crop&amp;w=1600&amp;h=1000&amp;q=80"
+      data-slazy-height="1000"
+      alt="Ocean waves at sunset"
+    /&gt;
+    &lt;figcaption&gt;Waves meeting the sunset&lt;/figcaption&gt;
+  &lt;/figure&gt;
+&lt;/div&gt;</code></pre>
+        </details>
       </section>
 
       <section>
@@ -310,6 +522,45 @@
             <span class="visually-hidden">Next</span>
           </button>
         </div>
+        <details class="source-panel">
+          <summary>Source</summary>
+          <pre><code>&lt;div id="carouselExample" class="carousel slide"&gt;
+  &lt;div class="carousel-inner"&gt;
+    &lt;div class="carousel-item active"&gt;
+      &lt;img
+        class="d-block w-100"
+        src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png"
+        data-slazy-src="https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&amp;fit=crop&amp;w=1600&amp;h=900&amp;q=80"
+        alt="Carousel landscape"
+      /&gt;
+    &lt;/div&gt;
+    &lt;div class="carousel-item"&gt;
+      &lt;img
+        class="d-block w-100"
+        src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png"
+        data-slazy-src="https://images.unsplash.com/photo-1467269204594-9661b134dd2b?auto=format&amp;fit=crop&amp;w=1600&amp;h=1000&amp;q=80"
+        alt="Carousel city"
+      /&gt;
+    &lt;/div&gt;
+    &lt;div class="carousel-item"&gt;
+      &lt;img
+        class="d-block w-100"
+        src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/1x1.png"
+        data-slazy-src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&amp;fit=crop&amp;w=1600&amp;h=1000&amp;q=80"
+        alt="Carousel ocean"
+      /&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+  &lt;button class="carousel-control-prev" type="button" data-bs-target="#carouselExample" data-bs-slide="prev"&gt;
+    &lt;span class="carousel-control-prev-icon" aria-hidden="true"&gt;&lt;/span&gt;
+    &lt;span class="visually-hidden"&gt;Previous&lt;/span&gt;
+  &lt;/button&gt;
+  &lt;button class="carousel-control-next" type="button" data-bs-target="#carouselExample" data-bs-slide="next"&gt;
+    &lt;span class="carousel-control-next-icon" aria-hidden="true"&gt;&lt;/span&gt;
+    &lt;span class="visually-hidden"&gt;Next&lt;/span&gt;
+  &lt;/button&gt;
+&lt;/div&gt;</code></pre>
+        </details>
       </section>
     </main>
 

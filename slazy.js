@@ -22,6 +22,12 @@
   const CLASS_NO_RESIZE = "slazy-no-resize";
   const CLASS_RESIZE = "slazy-resize";
   const CLASS_RESIZE_ZERO = "slazy-resize-zero";
+  const CLASS_PLACEHOLDER = "slazy-placeholder";
+  const CLASS_PLACEHOLDER_ACTIVE = "slazy-placeholder-active";
+
+  const PLACEHOLDER_BACKGROUND_COLOR = "#e2e8f0";
+  const DATA_PLACEHOLDER_ACTIVE = "placeholder-active";
+  const DATA_PLACEHOLDER_ORIGINAL_BGCOLOR = "placeholder-original-bgcolor";
 
   const api = {};
 
@@ -306,6 +312,86 @@
         element.className = classes.join(" ");
       }
     }
+  }
+
+  /**
+   * Removes a CSS class from an element regardless of classList support.
+   *
+   * @param {Element} element - The element to mutate.
+   * @param {string} className - Class token to remove.
+   */
+  function removeClass(element, className) {
+    if (element && element.classList && typeof element.classList.remove === "function") {
+      element.classList.remove(className);
+      return;
+    }
+
+    if (element && typeof element.className === "string") {
+      const tokens = element.className.split(/\s+/).filter(Boolean);
+      const filtered = tokens.filter((token) => token !== className);
+      element.className = filtered.join(" ");
+    }
+  }
+
+  /**
+   * Applies a lightweight placeholder background when `.slazy-placeholder` is present.
+   *
+   * @param {Element} element - Target element.
+   */
+  function activatePlaceholder(element) {
+    if (!element || !hasClass(element, CLASS_PLACEHOLDER)) {
+      return;
+    }
+
+    if (getData(element, DATA_PLACEHOLDER_ACTIVE) === "true") {
+      return;
+    }
+
+    if (element.style) {
+      const existingColor =
+        typeof element.style.backgroundColor === "string" ? element.style.backgroundColor : "";
+
+      if (!getData(element, DATA_PLACEHOLDER_ORIGINAL_BGCOLOR) && existingColor) {
+        setData(element, DATA_PLACEHOLDER_ORIGINAL_BGCOLOR, existingColor);
+      }
+
+      if (!existingColor) {
+        element.style.backgroundColor = PLACEHOLDER_BACKGROUND_COLOR;
+      }
+    }
+
+    setData(element, DATA_PLACEHOLDER_ACTIVE, "true");
+    addClass(element, CLASS_PLACEHOLDER_ACTIVE);
+  }
+
+  /**
+   * Clears previously applied placeholder styling.
+   *
+   * @param {Element} element - Target element.
+   */
+  function clearPlaceholder(element) {
+    if (!element) {
+      return;
+    }
+
+    if (getData(element, DATA_PLACEHOLDER_ACTIVE) !== "true") {
+      return;
+    }
+
+    if (element.style) {
+      const originalColor = getData(element, DATA_PLACEHOLDER_ORIGINAL_BGCOLOR);
+      if (originalColor) {
+        element.style.backgroundColor = originalColor;
+      } else if (typeof element.style.removeProperty === "function") {
+        element.style.removeProperty("background-color");
+      } else {
+        element.style.backgroundColor = "";
+      }
+    }
+
+    removeData(element, DATA_PLACEHOLDER_ORIGINAL_BGCOLOR);
+    removeData(element, DATA_PLACEHOLDER_ACTIVE);
+    removeClass(element, CLASS_PLACEHOLDER_ACTIVE);
   }
 
   /**
@@ -616,6 +702,8 @@
           return;
         }
 
+        activatePlaceholder(element);
+
         const widthCss = getStyleValue(element, "width");
         let realWidth = widthCss.includes("%")
           ? 0
@@ -643,6 +731,7 @@
         }
 
         if (element.src === url) {
+          clearPlaceholder(element);
           return;
         }
 
@@ -675,6 +764,7 @@
                 self.height = heightValue;
               }
             }
+            clearPlaceholder(self);
             addClass(self, CLASS_IMAGE_LOADED);
             removeData(self, "queue");
           };
@@ -705,6 +795,8 @@
         if (!element) {
           return;
         }
+
+        activatePlaceholder(element);
 
         const widthCss = getStyleValue(element, "width");
         let realWidth = widthCss.includes("%")
@@ -739,6 +831,7 @@
         );
 
         if (normalizedBackground === url || currentBackground === `url(${url})`) {
+          clearPlaceholder(element);
           return;
         }
 
@@ -753,6 +846,7 @@
           const img = new Image();
           img.onload = function () {
             setBackgroundImage(self, `url(${this.src})`);
+            clearPlaceholder(self);
             addClass(self, CLASS_IMAGE_LOADED);
             removeData(self, "queue");
           };

@@ -11,6 +11,7 @@ Slazy provides a lightweight helper for progressively loading images and backgro
 - Detects when an element becomes visible in the viewport, including special handling for Slick/Splide carousels that hide slides with `aria-hidden`.
 - Upgrades `<img>` tags from a lightweight placeholder (`src`) to the full asset stored in `data-slazy-src` once visible.
 - Replaces background images stored in `data-slazy-url`, with opt-in URL resizing driven by utility classes.
+- Applies lightweight placeholders when elements opt in via `.slazy-placeholder`.
 - Avoids redundant work by tracking queued and completed elements via `data-queue` and the `.slazy-image-loaded` marker class.
 - Supports a configurable prefetch margin so assets can load slightly before entering the viewport.
 
@@ -109,6 +110,27 @@ Call `Slazy.getPrefetchMargin()` to inspect the current value. Margins are clamp
 ```
 
 The element will still lazy load, but the `data-slazy-*` URL is used verbatim.
+
+## Placeholder helpers
+
+Add the `.slazy-placeholder` class when you want Slazy to provide a neutral background colour while the real asset is loading. When the upgraded image or background finishes, the helper restores the original styling and removes the helper class.
+
+```html
+<img
+  class="product slazy-resize slazy-placeholder"
+  src="/img/placeholder.jpg"
+  data-slazy-src="/img/product-1600x900.jpg"
+  alt="Product"
+/>
+
+<div
+  class="feature-card slazy-placeholder"
+  data-slazy-url="/img/feature-1600x900.jpg"
+  style="background-image: url('/img/feature-placeholder.png');"
+></div>
+```
+
+If you use your own placeholder colour inline, Slazy will respect it and only fall back to its default when no colour is specified.
 
 ## Carousel support
 

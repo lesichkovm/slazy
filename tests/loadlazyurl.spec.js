@@ -295,6 +295,26 @@ describe('loadLazyUrl', function() {
         expect(element.style.backgroundImage).toContain('background-180x0.jpg');
     });
 
+    it('should apply and clear placeholder styling for backgrounds with slazy-placeholder', function() {
+        const element = createLazyElement({ widthStyle: '200px', classList: ['slazy-placeholder'] });
+
+        expect(element.style.backgroundColor).toBe('');
+
+        loadLazyUrl();
+
+        expect(createdImages.length).toBe(1);
+        expect(element.dataset.placeholderActive).toBe('true');
+        expect(element.classList.contains('slazy-placeholder-active')).toBe(true);
+        expect(element.style.backgroundColor).not.toBe('');
+
+        const mock = createdImages[0];
+        mock.onload();
+
+        expect(element.dataset.placeholderActive).toBeUndefined();
+        expect(element.classList.contains('slazy-placeholder-active')).toBe(false);
+        expect(element.style.backgroundColor).toBe('');
+    });
+
     it('should skip already processed elements', function() {
         const url = 'background-150x0.jpg';
         const element = createLazyElement({ initialBackground: 'url("' + url + '")', dataset: { 'slazy-url': url }, widthStyle: '150px' });
