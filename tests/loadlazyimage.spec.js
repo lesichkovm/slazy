@@ -130,6 +130,14 @@ describe('loadLazyImage', function() {
         expect(createdImages.length).toBe(0);
     });
 
+    it('should skip elements without slazy-src data attribute', function() {
+        createImageElement({ dataset: {}, widthStyle: '150px', rectWidth: 150 });
+
+        loadLazyImage();
+
+        expect(createdImages.length).toBe(0);
+    });
+
     it('should load visible images', function() {
         const img = createImageElement();
 
