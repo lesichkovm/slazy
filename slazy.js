@@ -169,13 +169,13 @@ function loadLazyUrl() {
     return;
   }
 
-  $("*[data-slazy-url]:not(.image-loaded):not(.carousel_item_image)").each(
+  jq("*[data-slazy-url]:not(.image-loaded):not(.carousel_item_image)").each(
     function () {
-      const widthCss = $(this).css("width");
+      const widthCss = jq(this).css("width");
       let realWidth = widthCss.includes("%")
         ? 0
-        : parseInt($(this).width(), 10);
-      const parentWidth = parseInt($(this).parent().width(), 10) || 0;
+        : parseInt(jq(this).width(), 10);
+      const parentWidth = parseInt(jq(this).parent().width(), 10) || 0;
 
       if (realWidth === 0 && parentWidth > 0) {
         realWidth = parentWidth;
@@ -199,18 +199,18 @@ function loadLazyUrl() {
 
       // DEBUG:  console.log('URL to process:' + url);
 
-      if ($(this).css("background-image") === "url(" + url + ")") {
+      if (jq(this).css("background-image") === "url(" + url + ")") {
         return; //already processed
       }
 
-      if (typeof $(this).data("queue") !== "undefined") {
+      if (typeof jq(this).data("queue") !== "undefined") {
         return; //already processed
       }
 
       if (checkVisible(this)) {
-        $(this).data("queue", "loaded");
-        $(this).css("background-image", "url(" + url + ")");
-        $(this).addClass("image-loaded");
+        jq(this).data("queue", "loaded");
+        jq(this).css("background-image", "url(" + url + ")");
+        jq(this).addClass("image-loaded");
       }
     }
   );
