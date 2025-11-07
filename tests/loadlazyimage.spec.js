@@ -183,6 +183,19 @@ describe('loadLazyImage', function() {
         expect(createdImages.length).toBe(0);
     });
 
+    it('should skip already processed images', function() {
+        const absoluteUrl = new URL('image-120x0.jpg', window.location.href).href;
+        const element = createImageElement({ dataset: { 'slazy-src': absoluteUrl }, rectWidth: 120, widthStyle: '120px' });
+        element.src = absoluteUrl;
+        element.setAttribute('src', absoluteUrl);
+
+        loadLazyImage();
+
+        expect(createdImages.length).toBe(0);
+        expect(element.dataset.queue).toBeUndefined();
+        expect(element.classList.contains('image-loaded')).toBe(false);
+    });
+
     it('should skip carousel images', function() {
         createImageElement({ classList: ['carousel_item_image'] });
 
