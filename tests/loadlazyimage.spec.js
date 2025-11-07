@@ -167,7 +167,7 @@ describe('loadLazyImage', function() {
         expect(img.dataset.queue).toBeUndefined();
         expect(img.getAttribute('width')).toBe('150');
         expect(img.getAttribute('height')).toBe('75');
-        expect(img.classList.contains('image-loaded')).toBe(true);
+        expect(img.classList.contains('slazy-image-loaded')).toBe(true);
     });
 
     it('should reset queue markers when image load fails', function() {
@@ -182,7 +182,7 @@ describe('loadLazyImage', function() {
         mock.onerror();
 
         expect(img.dataset.queue).toBeUndefined();
-        expect(img.classList.contains('image-loaded')).toBe(false);
+        expect(img.classList.contains('slazy-image-loaded')).toBe(false);
     });
 
     it('should allow reloading when slazy-src changes after successful load', function() {
@@ -198,7 +198,7 @@ describe('loadLazyImage', function() {
 
         expect(img.dataset.queue).toBeUndefined();
 
-        img.classList.remove('image-loaded');
+        img.classList.remove('slazy-image-loaded');
         img.setAttribute('data-slazy-src', 'image-320x240.jpg');
         stubRect(img, { width: 320 });
 
@@ -252,7 +252,7 @@ describe('loadLazyImage', function() {
 
         expect(createdImages.length).toBe(0);
         expect(element.dataset.queue).toBeUndefined();
-        expect(element.classList.contains('image-loaded')).toBe(false);
+        expect(element.classList.contains('slazy-image-loaded')).toBe(false);
     });
 
     it('should skip carousel images', function() {
@@ -289,7 +289,7 @@ describe('loadLazyImage', function() {
     });
 
     it('should not resize URLs when no-resize class is present', function() {
-        createImageElement({ dataset: { 'slazy-src': 'image-640x480.jpg' }, classList: ['no-resize'] });
+        createImageElement({ dataset: { 'slazy-src': 'image-640x480.jpg' }, classList: ['slazy-no-resize'] });
 
         loadLazyImage();
 

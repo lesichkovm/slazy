@@ -17,6 +17,9 @@
     urlInterval: null,
   };
 
+  const CLASS_IMAGE_LOADED = "slazy-image-loaded";
+  const CLASS_NO_RESIZE = "slazy-no-resize";
+
   const api = {};
 
   /**
@@ -493,7 +496,7 @@
    * Applies responsive URL rewrites, prevents duplicate work, and tracks load state.
    */
   api.loadLazyImage = function loadLazyImage() {
-    const hasLazyImages = hasMatchingElements("img[data-slazy-src]:not(.image-loaded)");
+    const hasLazyImages = hasMatchingElements(`img[data-slazy-src]:not(.${CLASS_IMAGE_LOADED})`);
 
     if (!hasLazyImages) {
       stopImageTimer();
@@ -501,7 +504,7 @@
     }
 
     forEachMatchingElement(
-      "img[data-slazy-src]:not(.image-loaded):not(.carousel_item_image)",
+      `img[data-slazy-src]:not(.${CLASS_IMAGE_LOADED}):not(.carousel_item_image)`,
       function (element) {
         if (!element) {
           return;
@@ -527,7 +530,7 @@
           return;
         }
 
-        const noResize = hasClass(element, "no-resize");
+        const noResize = hasClass(element, CLASS_NO_RESIZE);
         if (noResize === false) {
           url = resizeUrlForWidth(url, realWidth);
         }
@@ -560,7 +563,7 @@
               self.width = widthValue;
               self.height = heightValue;
             }
-            addClass(self, "image-loaded");
+            addClass(self, CLASS_IMAGE_LOADED);
             removeData(self, "queue");
           };
           newImg.onerror = function () {
@@ -577,7 +580,7 @@
    * Mirrors the image loader behaviour, including responsive URL adjustments and guards.
    */
   api.loadLazyUrl = function loadLazyUrl() {
-    const hasLazyUrls = hasMatchingElements("*[data-slazy-url]:not(.image-loaded)");
+    const hasLazyUrls = hasMatchingElements(`*[data-slazy-url]:not(.${CLASS_IMAGE_LOADED})`);
 
     if (!hasLazyUrls) {
       stopUrlTimer();
@@ -585,7 +588,7 @@
     }
 
     forEachMatchingElement(
-      "*[data-slazy-url]:not(.image-loaded):not(.carousel_item_image)",
+      `*[data-slazy-url]:not(.${CLASS_IMAGE_LOADED}):not(.carousel_item_image)` ,
       function (element) {
         if (!element) {
           return;
@@ -611,7 +614,7 @@
           return;
         }
 
-        const noResize = hasClass(element, "no-resize");
+        const noResize = hasClass(element, CLASS_NO_RESIZE);
         if (noResize === false) {
           url = resizeUrlForWidth(url, realWidth);
         }
@@ -637,7 +640,7 @@
           const img = new Image();
           img.onload = function () {
             setBackgroundImage(self, `url(${this.src})`);
-            addClass(self, "image-loaded");
+            addClass(self, CLASS_IMAGE_LOADED);
             removeData(self, "queue");
           };
           img.onerror = function () {

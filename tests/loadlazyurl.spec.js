@@ -145,7 +145,7 @@ describe('loadLazyUrl', function() {
 
         expect(element.dataset.queue).toBeUndefined();
         expect(element.style.backgroundImage).toBe('');
-        expect(element.classList.contains('image-loaded')).toBe(false);
+        expect(element.classList.contains('slazy-image-loaded')).toBe(false);
     });
 
     it('should load visible background images', function() {
@@ -161,7 +161,7 @@ describe('loadLazyUrl', function() {
 
         expect(element.dataset.queue).toBeUndefined();
         expect(element.style.backgroundImage).toContain('background-150x0.jpg');
-        expect(element.classList.contains('image-loaded')).toBe(true);
+        expect(element.classList.contains('slazy-image-loaded')).toBe(true);
     });
 
     it('should reset queue markers when background load fails', function() {
@@ -177,7 +177,7 @@ describe('loadLazyUrl', function() {
 
         expect(element.dataset.queue).toBeUndefined();
         expect(element.style.backgroundImage).toBe('');
-        expect(element.classList.contains('image-loaded')).toBe(false);
+        expect(element.classList.contains('slazy-image-loaded')).toBe(false);
     });
 
     it('should use parent width when element width is percentage based', function() {
@@ -205,7 +205,7 @@ describe('loadLazyUrl', function() {
 
         expect(element.dataset.queue).toBeUndefined();
         expect(element.style.backgroundImage).toBe('');
-        expect(element.classList.contains('image-loaded')).toBe(false);
+        expect(element.classList.contains('slazy-image-loaded')).toBe(false);
     });
 
     it('should skip already queued elements', function() {
@@ -264,7 +264,7 @@ describe('loadLazyUrl', function() {
     });
 
     it('should not resize URLs when no-resize class is present', function() {
-        const element = createLazyElement({ classList: ['no-resize'], widthStyle: '180px' });
+        const element = createLazyElement({ classList: ['slazy-no-resize'], widthStyle: '180px' });
 
         loadLazyUrl();
 
