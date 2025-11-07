@@ -160,6 +160,81 @@ let loadingLazyImages = setInterval(loadLazyImage, 1000);
 function loadLazyUrl() {
   const jq = window.$ || window.jQuery;
 
+  const dataKeyToDatasetKey = (key) =>
+    key.replace(/-([a-z])/g, (_, char) => char.toUpperCase());
+
+  const getData = (element, key) => {
+    if (!element) {
+      return undefined;
+    }
+    const attrName = `data-${key}`;
+
+    if (typeof element.getAttribute === "function") {
+      const attrValue = element.getAttribute(attrName);
+      if (attrValue != null) {
+        return attrValue;
+      }
+    }
+
+    if (element.dataset) {
+      const datasetKey = dataKeyToDatasetKey(key);
+      if (Object.prototype.hasOwnProperty.call(element.dataset, datasetKey)) {
+        return element.dataset[datasetKey];
+      }
+    }
+
+    if (typeof jq === "function") {
+      return jq(element).data(key);
+    }
+
+    return undefined;
+  };
+
+  const setData = (element, key, value) => {
+    if (!element) {
+      return;
+    }
+    const attrName = `data-${key}`;
+
+    if (typeof element.setAttribute === "function") {
+      element.setAttribute(attrName, value);
+      return;
+    }
+
+    if (element.dataset) {
+      const datasetKey = dataKeyToDatasetKey(key);
+      element.dataset[datasetKey] = value;
+      return;
+    }
+
+    if (typeof jq === "function") {
+      jq(element).data(key, value);
+    }
+  };
+
+  const hasClass = (element, className) => {
+    if (element && element.classList && typeof element.classList.contains === "function") {
+      return element.classList.contains(className);
+    }
+
+    if (typeof jq === "function") {
+      return jq(element).hasClass(className);
+    }
+
+    return false;
+  };
+
+  const addClass = (element, className) => {
+    if (element && element.classList && typeof element.classList.add === "function") {
+      element.classList.add(className);
+      return;
+    }
+
+    if (typeof jq === "function") {
+      jq(element).addClass(className);
+    }
+  };
+
   if (typeof jq !== "function") {
     return;
   }
@@ -171,11 +246,12 @@ function loadLazyUrl() {
 
   jq("*[data-slazy-url]:not(.image-loaded):not(.carousel_item_image)").each(
     function () {
-      const widthCss = jq(this).css("width");
+      const element = this;
+      const widthCss = jq(element).css("width");
       let realWidth = widthCss.includes("%")
         ? 0
-        : parseInt(jq(this).width(), 10);
-      const parentWidth = parseInt(jq(this).parent().width(), 10) || 0;
+        : parseInt(jq(element).width(), 10);
+      const parentWidth = parseInt(jq(element).parent().width(), 10) || 0;
 
       if (realWidth === 0 && parentWidth > 0) {
         realWidth = parentWidth;
@@ -185,13 +261,13 @@ function loadLazyUrl() {
         return;
       }
 
-      let url = jq(this).data("slazy-url");
+      let url = getData(element, "slazy-url");
 
-      if (typeof url === "undefined") {
+      if (url == null) {
         return;
       }
 
-      const noResize = jq(this).hasClass("no-resize");
+      const noResize = hasClass(element, "no-resize");
       if (noResize === false) {
         const resizedUrl = url.replace(/\d+x\d+/i, realWidth + "x0");
         url = resizedUrl;
@@ -199,18 +275,18 @@ function loadLazyUrl() {
 
       // DEBUG:  console.log('URL to process:' + url);
 
-      if (jq(this).css("background-image") === "url(" + url + ")") {
+      if (jq(element).css("background-image") === "url(" + url + ")") {
         return; //already processed
       }
 
-      if (typeof jq(this).data("queue") !== "undefined") {
+      if (getData(element, "queue") != null) {
         return; //already processed
       }
 
-      if (checkVisible(this)) {
-        jq(this).data("queue", "loaded");
-        jq(this).css("background-image", "url(" + url + ")");
-        jq(this).addClass("image-loaded");
+      if (checkVisible(element)) {
+        setData(element, "queue", "loaded");
+        jq(element).css("background-image", "url(" + url + ")");
+        addClass(element, "image-loaded");
       }
     }
   );
