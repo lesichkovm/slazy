@@ -2,6 +2,10 @@
 
 Slazy provides a lightweight helper for progressively loading images and background assets once they enter the viewport. It is designed to work with standard markup as well as carousel components that hide slides with `aria-hidden` attributes.
 
+## Requirements
+
+- None (vanilla JavaScript only)
+
 ## Features
 
 - Detects whether an element is currently visible in the viewport, including special handling for Slick and Splide carousels.
@@ -11,9 +15,8 @@ Slazy provides a lightweight helper for progressively loading images and backgro
 
 ## Getting Started
 
-1. Ensure jQuery is available globally on the page.
-2. Include `slazy.js` in your bundle or load it with a `<script>` tag.
-3. Add the `data-slazy-src` attribute to any `<img>` that should lazy-load, or `data-slazy-url` to elements that should swap their background images.
+1. Include `slazy.js` in your bundle or load it with a `<script>` tag.
+2. Add the `data-slazy-src` attribute to any `<img>` that should lazy-load, or `data-slazy-url` to elements that should swap their background images.
 
 ## Slazy CDN
 

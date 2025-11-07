@@ -1,6 +1,15 @@
-function checkVisible(elementInstance) {
+function getJq() {
+  if (typeof window === "undefined") {
+    return null;
+  }
   const jq = window.$ || window.jQuery;
-  const $element = typeof jq === "function" ? jq(elementInstance) : null;
+  return typeof jq === "function" ? jq : null;
+}
+
+function checkVisible(elementInstance) {
+  const jq = getJq();
+  const $element = jq ? jq(elementInstance) : null;
+  const element = elementInstance;
 
   const isHidden = (value) => {
     if (value == null) {
@@ -10,66 +19,55 @@ function checkVisible(elementInstance) {
     return normalized === "true" || normalized === "1";
   };
 
-  const hasCarouselImageClass =
-    elementInstance &&
-    elementInstance.classList &&
-    elementInstance.classList.contains("carousel_item_image");
+  const hasCarouselImageClass = Boolean(
+    (element &&
+      element.classList &&
+      typeof element.classList.contains === "function" &&
+      element.classList.contains("carousel_item_image")) ||
+      ($element && typeof $element.hasClass === "function" &&
+        $element.hasClass("carousel_item_image"))
+  );
 
-  const usesJQueryCarouselCheck =
-    !hasCarouselImageClass &&
-    $element &&
-    typeof $element.hasClass === "function" &&
-    $element.hasClass("carousel_item_image");
-
-  if (hasCarouselImageClass || usesJQueryCarouselCheck) {
-    let carouselHidden = null;
-
-    if (
-      elementInstance &&
-      typeof elementInstance.closest === "function"
-    ) {
-      const carouselItem = elementInstance.closest(".carousel_item");
-      if (carouselItem && typeof carouselItem.getAttribute === "function") {
-        carouselHidden = carouselItem.getAttribute("aria-hidden");
-      }
+  const getClosestHiddenState = (target, selector) => {
+    if (!target || typeof target.closest !== "function") {
+      return null;
     }
+    const closest = target.closest(selector);
+    if (closest && typeof closest.getAttribute === "function") {
+      return closest.getAttribute("aria-hidden");
+    }
+    return null;
+  };
 
+  if (hasCarouselImageClass) {
+    let carouselHidden = getClosestHiddenState(element, ".carousel_item");
     if (carouselHidden == null && $element && typeof $element.closest === "function") {
       const carouselItem = $element.closest(".carousel_item");
       if (carouselItem && typeof carouselItem.attr === "function") {
         carouselHidden = carouselItem.attr("aria-hidden");
       }
     }
-
     if (isHidden(carouselHidden)) {
       return false;
     }
 
-    let splideHidden = null;
-
-    if (
-      elementInstance &&
-      typeof elementInstance.closest === "function"
-    ) {
-      const splideSlide = elementInstance.closest("div.splide__slide");
-      if (splideSlide && typeof splideSlide.getAttribute === "function") {
-        splideHidden = splideSlide.getAttribute("aria-hidden");
-      }
-    }
-
+    let splideHidden = getClosestHiddenState(element, "div.splide__slide");
     if (splideHidden == null && $element && typeof $element.closest === "function") {
       const splideSlide = $element.closest("div.splide__slide");
       if (splideSlide && typeof splideSlide.attr === "function") {
         splideHidden = splideSlide.attr("aria-hidden");
       }
     }
-
     if (isHidden(splideHidden)) {
       return false;
     }
   }
 
-  const rect = elementInstance.getBoundingClientRect();
+  if (!element || typeof element.getBoundingClientRect !== "function") {
+    return true;
+  }
+
+  const rect = element.getBoundingClientRect();
   const viewportHeight = Math.max(
     (document.documentElement && document.documentElement.clientHeight) || 0,
     window.innerHeight || 0
@@ -80,11 +78,6 @@ function checkVisible(elementInstance) {
   }
 
   return rect.bottom >= 0 && rect.top < viewportHeight;
-}
-
-function getJq() {
-  const jq = window.$ || window.jQuery;
-  return typeof jq === "function" ? jq : null;
 }
 
 function dataKeyToDatasetKey(key) {
@@ -114,7 +107,10 @@ function getData(element, key) {
 
   const jq = getJq();
   if (jq) {
-    return jq(element).data(key);
+    const wrapped = jq(element);
+    if (wrapped && typeof wrapped.data === "function") {
+      return wrapped.data(key);
+    }
   }
 
   return undefined;
@@ -140,7 +136,10 @@ function setData(element, key, value) {
 
   const jq = getJq();
   if (jq) {
-    jq(element).data(key, value);
+    const wrapped = jq(element);
+    if (wrapped && typeof wrapped.data === "function") {
+      wrapped.data(key, value);
+    }
   }
 }
 
@@ -151,7 +150,10 @@ function hasClass(element, className) {
 
   const jq = getJq();
   if (jq) {
-    return jq(element).hasClass(className);
+    const wrapped = jq(element);
+    if (wrapped && typeof wrapped.hasClass === "function") {
+      return wrapped.hasClass(className);
+    }
   }
 
   return false;
@@ -165,7 +167,10 @@ function addClass(element, className) {
 
   const jq = getJq();
   if (jq) {
-    jq(element).addClass(className);
+    const wrapped = jq(element);
+    if (wrapped && typeof wrapped.addClass === "function") {
+      wrapped.addClass(className);
+    }
   }
 }
 
@@ -198,9 +203,12 @@ function getStyleValue(element, property) {
 
   const jq = getJq();
   if (jq) {
-    const fallback = jq(element).css(property);
-    if (typeof fallback === "string") {
-      return fallback;
+    const wrapped = jq(element);
+    if (wrapped && typeof wrapped.css === "function") {
+      const fallback = wrapped.css(property);
+      if (typeof fallback === "string") {
+        return fallback;
+      }
     }
   }
 
@@ -236,7 +244,7 @@ function getElementWidth(element) {
       if (typeof width === "number" && width > 0) {
         return width;
       }
-      const parsedWidth = parseFloat(width);
+      const parsedWidth = typeof width === "string" ? parseFloat(width) : NaN;
       if (!Number.isNaN(parsedWidth) && parsedWidth > 0) {
         return parsedWidth;
       }
@@ -269,7 +277,7 @@ function getParentWidth(element) {
           if (typeof width === "number" && width > 0) {
             return Math.round(width);
           }
-          const parsedWidth = parseFloat(width);
+          const parsedWidth = typeof width === "string" ? parseFloat(width) : NaN;
           if (!Number.isNaN(parsedWidth) && parsedWidth > 0) {
             return Math.round(parsedWidth);
           }
@@ -298,30 +306,37 @@ function setBackgroundImage(element, value) {
     return;
   }
 
-  const jq = getJq();
-  const useJq = Boolean(jq);
-
   if (element.style) {
     element.style.backgroundImage = value;
-    if (useJq) {
+    const jq = getJq();
+    if (jq) {
       const wrapped = jq(element);
       if (wrapped && typeof wrapped.css === "function") {
         wrapped.css("background-image", value);
       }
     }
-    return;
-  }
-
-  if (useJq) {
-    jq(element).css("background-image", value);
+  } else if (typeof element.setAttribute === "function") {
+    const existingStyle = element.getAttribute("style") || "";
+    const sanitized = existingStyle
+      .split(";")
+      .map((part) => part.trim())
+      .filter(Boolean)
+      .filter((part) => !part.startsWith("background-image"));
+    sanitized.push(`background-image: ${value}`);
+    element.setAttribute("style", sanitized.join("; "));
+  } else {
+    const jq = getJq();
+    if (jq) {
+      const wrapped = jq(element);
+      if (wrapped && typeof wrapped.css === "function") {
+        wrapped.css("background-image", value);
+      }
+    }
   }
 }
 
 function hasMatchingElements(selector) {
-  if (
-    typeof document !== "undefined" &&
-    typeof document.querySelectorAll === "function"
-  ) {
+  if (typeof document !== "undefined" && typeof document.querySelectorAll === "function") {
     const domMatches = document.querySelectorAll(selector);
     if (domMatches && domMatches.length > 0) {
       return true;
@@ -361,10 +376,7 @@ function hasMatchingElements(selector) {
 function forEachMatchingElement(selector, iterator) {
   let handled = false;
 
-  if (
-    typeof document !== "undefined" &&
-    typeof document.querySelectorAll === "function"
-  ) {
+  if (typeof document !== "undefined" && typeof document.querySelectorAll === "function") {
     const domMatches = document.querySelectorAll(selector);
     if (domMatches && domMatches.length > 0) {
       handled = true;
@@ -409,13 +421,7 @@ function forEachMatchingElement(selector, iterator) {
 }
 
 function loadLazyImage() {
-  const jq = getJq();
-
   const hasLazyImages = hasMatchingElements("img[data-slazy-src]:not(.image-loaded)");
-
-  if (typeof jq !== "function" && !hasLazyImages) {
-    return;
-  }
 
   if (!hasLazyImages) {
     clearInterval(loadingLazyImages);
@@ -483,9 +489,13 @@ function loadLazyImage() {
             self.setAttribute("width", widthValue);
             self.setAttribute("height", heightValue);
           } else {
+            const jq = getJq();
             if (jq) {
-              jq(self).attr("width", widthValue);
-              jq(self).attr("height", heightValue);
+              const wrapped = jq(self);
+              if (wrapped && typeof wrapped.attr === "function") {
+                wrapped.attr("width", widthValue);
+                wrapped.attr("height", heightValue);
+              }
             }
           }
         };
