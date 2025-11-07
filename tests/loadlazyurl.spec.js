@@ -6,6 +6,8 @@ describe('loadLazyUrl', function() {
     let elementWrappers;
     let setSelectorHandler;
     let registerElementWrapper;
+    let original$;
+    let originaljQuery;
 
     function createElementWrapper(overrides = {}) {
         const dataStore = Object.assign({ 'slazy-url': 'background.jpg' }, overrides.initialData);
@@ -44,6 +46,8 @@ describe('loadLazyUrl', function() {
 
     beforeEach(function() {
         // Mock jQuery
+        original$ = window.$;
+        originaljQuery = window.jQuery;
         selectorHandlers = {};
         elementWrappers = new Map();
 
@@ -99,7 +103,8 @@ describe('loadLazyUrl', function() {
     afterEach(function() {
         window.setInterval = originalSetInterval;
         window.clearInterval = originalClearInterval;
-        delete window.$;
+        window.$ = original$;
+        window.jQuery = originaljQuery;
         delete window.checkVisible;
     });
 
