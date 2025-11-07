@@ -159,7 +159,7 @@ describe('loadLazyUrl', function() {
 
         mock.onload();
 
-        expect(element.dataset.queue).toBe('loaded');
+        expect(element.dataset.queue).toBeUndefined();
         expect(element.style.backgroundImage).toContain('background-150x0.jpg');
         expect(element.classList.contains('image-loaded')).toBe(true);
     });
@@ -194,7 +194,7 @@ describe('loadLazyUrl', function() {
         mock.onload();
 
         expect(element.style.backgroundImage).toContain('background-250x0.jpg');
-        expect(element.dataset.queue).toBe('loaded');
+        expect(element.dataset.queue).toBeUndefined();
     });
 
     it('should not process elements when checkVisible returns false', function() {

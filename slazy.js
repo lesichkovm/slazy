@@ -536,7 +536,8 @@
           return;
         }
 
-        if (getData(element, "queue") != null) {
+        const queueState = getData(element, "queue");
+        if (queueState === "loading") {
           return;
         }
 
@@ -546,7 +547,6 @@
           const newImg = new Image();
           newImg.onload = function () {
             self.src = this.src;
-            setData(self, "queue", "loaded");
             const widthValue = Number(
               this.width || this.naturalWidth || realWidth || 0
             );
@@ -561,6 +561,7 @@
               self.height = heightValue;
             }
             addClass(self, "image-loaded");
+            removeData(self, "queue");
           };
           newImg.onerror = function () {
             removeData(self, "queue");
@@ -625,7 +626,8 @@
           return;
         }
 
-        if (getData(element, "queue") != null) {
+        const queueState = getData(element, "queue");
+        if (queueState === "loading") {
           return;
         }
 
@@ -635,8 +637,8 @@
           const img = new Image();
           img.onload = function () {
             setBackgroundImage(self, `url(${this.src})`);
-            setData(self, "queue", "loaded");
             addClass(self, "image-loaded");
+            removeData(self, "queue");
           };
           img.onerror = function () {
             removeData(self, "queue");

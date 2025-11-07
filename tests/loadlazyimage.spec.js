@@ -19,7 +19,12 @@ describe('loadLazyImage', function() {
             width: widthValue,
             height: heightValue
         };
-        spyOn(element, 'getBoundingClientRect').and.returnValue(Object.assign(defaults, rect));
+        const rectValue = Object.assign(defaults, rect);
+        if (element.getBoundingClientRect && element.getBoundingClientRect.and && typeof element.getBoundingClientRect.and.returnValue === 'function') {
+            element.getBoundingClientRect.and.returnValue(rectValue);
+        } else {
+            spyOn(element, 'getBoundingClientRect').and.returnValue(rectValue);
+        }
     }
 
     function createParent(width) {
@@ -159,7 +164,7 @@ describe('loadLazyImage', function() {
         mock.height = 75;
         mock.onload();
 
-        expect(img.dataset.queue).toBe('loaded');
+        expect(img.dataset.queue).toBeUndefined();
         expect(img.getAttribute('width')).toBe('150');
         expect(img.getAttribute('height')).toBe('75');
         expect(img.classList.contains('image-loaded')).toBe(true);
@@ -178,6 +183,30 @@ describe('loadLazyImage', function() {
 
         expect(img.dataset.queue).toBeUndefined();
         expect(img.classList.contains('image-loaded')).toBe(false);
+    });
+
+    it('should allow reloading when slazy-src changes after successful load', function() {
+        const img = createImageElement();
+
+        loadLazyImage();
+
+        expect(createdImages.length).toBe(1);
+        const firstMock = createdImages[0];
+
+        firstMock.width = 200;
+        firstMock.onload();
+
+        expect(img.dataset.queue).toBeUndefined();
+
+        img.classList.remove('image-loaded');
+        img.setAttribute('data-slazy-src', 'image-320x240.jpg');
+        stubRect(img, { width: 320 });
+
+        loadLazyImage();
+
+        expect(createdImages.length).toBe(2);
+        const secondMock = createdImages[1];
+        expect(secondMock.src).toBe('image-320x0.jpg');
     });
 
     it('should use parent width when element width is percentage based', function() {
