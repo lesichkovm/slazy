@@ -235,6 +235,149 @@ function loadLazyUrl() {
     }
   };
 
+  const isDomElement = (value) =>
+    value && typeof value === "object" && value.nodeType === 1;
+
+  const getStyleValue = (element, property) => {
+    if (!element) {
+      return "";
+    }
+
+    if (element.style && element.style[property] != null && element.style[property] !== "") {
+      return element.style[property];
+    }
+
+    if (
+      isDomElement(element) &&
+      typeof window !== "undefined" &&
+      typeof window.getComputedStyle === "function"
+    ) {
+      const computed = window.getComputedStyle(element);
+      if (computed) {
+        const value = computed.getPropertyValue(property);
+        if (value != null && value !== "") {
+          return value;
+        }
+      }
+    }
+
+    if (typeof jq === "function") {
+      const fallback = jq(element).css(property);
+      if (typeof fallback === "string") {
+        return fallback;
+      }
+    }
+
+    return "";
+  };
+
+  const getElementWidth = (element) => {
+    if (!element) {
+      return 0;
+    }
+
+    if (isDomElement(element) && typeof element.getBoundingClientRect === "function") {
+      const rect = element.getBoundingClientRect();
+      if (rect && typeof rect.width === "number" && rect.width > 0) {
+        return rect.width;
+      }
+    }
+
+    if (isDomElement(element) && typeof element.offsetWidth === "number" && element.offsetWidth > 0) {
+      return element.offsetWidth;
+    }
+
+    const widthValue = parseFloat(getStyleValue(element, "width"));
+    if (!Number.isNaN(widthValue) && widthValue > 0) {
+      return widthValue;
+    }
+
+    if (typeof jq === "function") {
+      const wrapped = jq(element);
+      if (wrapped && typeof wrapped.width === "function") {
+        const width = wrapped.width();
+        if (typeof width === "number" && width > 0) {
+          return width;
+        }
+        const parsedWidth = parseFloat(width);
+        if (!Number.isNaN(parsedWidth) && parsedWidth > 0) {
+          return parsedWidth;
+        }
+      }
+    }
+
+    return 0;
+  };
+
+  const getParentWidth = (element) => {
+    if (!element) {
+      return 0;
+    }
+
+    if (isDomElement(element) && element.parentElement) {
+      const domParentWidth = Math.round(getElementWidth(element.parentElement));
+      if (domParentWidth > 0) {
+        return domParentWidth;
+      }
+    }
+
+    if (typeof jq === "function") {
+      const wrapped = jq(element);
+      if (wrapped && typeof wrapped.parent === "function") {
+        const parentWrapper = wrapped.parent();
+        if (parentWrapper) {
+          if (typeof parentWrapper.width === "function") {
+            const width = parentWrapper.width();
+            if (typeof width === "number" && width > 0) {
+              return Math.round(width);
+            }
+            const parsedWidth = parseFloat(width);
+            if (!Number.isNaN(parsedWidth) && parsedWidth > 0) {
+              return Math.round(parsedWidth);
+            }
+          }
+
+          if (parentWrapper[0]) {
+            const wrappedDomWidth = Math.round(getElementWidth(parentWrapper[0]));
+            if (wrappedDomWidth > 0) {
+              return wrappedDomWidth;
+            }
+          }
+        }
+      }
+    }
+
+    return 0;
+  };
+
+  const getBackgroundImage = (element) => {
+    const styleValue = getStyleValue(element, "background-image");
+    return typeof styleValue === "string" ? styleValue : "";
+  };
+
+  const setBackgroundImage = (element, value) => {
+    if (!element) {
+      return;
+    }
+
+    const useJq = typeof jq === "function";
+
+    if (element.style) {
+      element.style.backgroundImage = value;
+      if (useJq) {
+        const wrapped = jq(element);
+        if (wrapped && typeof wrapped.css === "function") {
+          wrapped.css("background-image", value);
+        }
+      }
+      return;
+    }
+
+    if (useJq) {
+      jq(element).css("background-image", value);
+    }
+  };
+
   if (typeof jq !== "function") {
     return;
   }
@@ -247,11 +390,11 @@ function loadLazyUrl() {
   jq("*[data-slazy-url]:not(.image-loaded):not(.carousel_item_image)").each(
     function () {
       const element = this;
-      const widthCss = jq(element).css("width");
+      const widthCss = getStyleValue(element, "width");
       let realWidth = widthCss.includes("%")
         ? 0
-        : parseInt(jq(element).width(), 10);
-      const parentWidth = parseInt(jq(element).parent().width(), 10) || 0;
+        : Math.round(getElementWidth(element));
+      const parentWidth = getParentWidth(element) || 0;
 
       if (realWidth === 0 && parentWidth > 0) {
         realWidth = parentWidth;
@@ -275,7 +418,7 @@ function loadLazyUrl() {
 
       // DEBUG:  console.log('URL to process:' + url);
 
-      if (jq(element).css("background-image") === "url(" + url + ")") {
+      if (getBackgroundImage(element) === "url(" + url + ")") {
         return; //already processed
       }
 
@@ -285,7 +428,7 @@ function loadLazyUrl() {
 
       if (checkVisible(element)) {
         setData(element, "queue", "loaded");
-        jq(element).css("background-image", "url(" + url + ")");
+        setBackgroundImage(element, "url(" + url + ")");
         addClass(element, "image-loaded");
       }
     }
