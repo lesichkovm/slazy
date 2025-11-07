@@ -331,11 +331,12 @@ function loadLazyImage() {
 
   jq("img[data-slazy-src]:not(.image-loaded):not(.carousel_item_image)").each(
     function () {
-      const widthCss = jq(this).css("width");
+      const element = this;
+      const widthCss = getStyleValue(element, "width");
       let realWidth = widthCss.includes("%")
         ? 0
-        : parseInt(jq(this).width(), 10);
-      const parentWidth = parseInt(jq(this).parent().width(), 10) || 0;
+        : Math.round(getElementWidth(element));
+      const parentWidth = getParentWidth(element) || 0;
 
       if (realWidth === 0 && parentWidth > 0) {
         realWidth = parentWidth;

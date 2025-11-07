@@ -15,15 +15,16 @@ Slazy provides a lightweight helper for progressively loading images and backgro
 2. Include `slazy.js` in your bundle or load it with a `<script>` tag.
 3. Add the `data-slazy-src` attribute to any `<img>` that should lazy-load, or `data-slazy-url` to elements that should swap their background images.
 
-## WebJS CDN
+## Slazy CDN
 
-If you need to include the WebJS helper from a CDN, you can either pull the latest build or lock to a specific version:
+If you need to include the Slazy helper from a CDN, you can either pull
+the latest build or lock to a specific version:
 
 ```html
-<!-- Load latest WebJS from CDN -->
+<!-- Load latest Slazy from CDN -->
 <script src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@latest/dist/slazy.min.js"></script>
 
-<!-- Load specific version of WebJS from CDN -->
+<!-- Load specific version of Slazy from CDN -->
 <script src="https://cdn.jsdelivr.net/gh/lesichkovm/slazy@v2.9.0/dist/slazy.min.js"></script>
 ```
 
