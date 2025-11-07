@@ -212,11 +212,16 @@ describe('loadLazyUrl', function() {
                 each: function(callback) {
                     const element = {
                         style: {
-                            backgroundImage: 'url(already-loaded.jpg)'
+                            backgroundImage: 'url(background-100x0.jpg)'
                         }
                     };
-                    const wrapper = registerElementWrapper(element);
-                    wrapper.css.and.returnValue('url(already-loaded.jpg)');
+                    const wrapper = registerElementWrapper(element, {
+                        initialData: { 'slazy-url': 'background-640x480.jpg' },
+                        initialStyles: {
+                            'background-image': 'url(background-100x0.jpg)',
+                            width: '100px'
+                        }
+                    });
                     callback.call(element);
                 }
             };
