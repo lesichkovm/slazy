@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Slazy Loading Preview</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      padding: 40px 20px;
+      background: #f5f5f5;
+      line-height: 1.6;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 10px;
+      color: #333;
+    }
+
+    .instructions {
+      text-align: center;
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .card-image-wrapper {
+      height: 200px;
+      overflow: hidden;
+      background: #e2e8f0;
+    }
+
+    .card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .card-content {
+      padding: 15px;
+    }
+
+    .card-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 5px;
+    }
+
+    .card-desc {
+      font-size: 14px;
+      color: #666;
+    }
+
+    .controls {
+      text-align: center;
+      margin: 30px 0;
+    }
+
+    button {
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      margin: 0 5px;
+    }
+
+    button:hover {
+      background: #2563eb;
+    }
+
+    .status {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 12px;
+      color: #999;
+    }
+
+    /* Simulated slow image loading for demo */
+    .demo-slow img[data-slazy-src] {
+      opacity: 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Slazy Loading Animation Preview</h1>
+  <p class="instructions">
+    Images below use <code>.slazy-placeholder</code> class. The shimmer animation appears while loading.<br>
+    <strong>Tip:</strong> Open DevTools → Network → set "Slow 3G" to see the effect longer.
+  </p>
+
+  <div class="controls">
+    <button onclick="reloadImages()">Reload Images (see animation)</button>
+    <button onclick="addNewImages()">Add New Images</button>
+  </div>
+
+  <div class="grid" id="imageGrid">
+    <!-- Cards with placeholder images -->
+    <div class="card">
+      <div class="card-image-wrapper">
+        <img class="slazy-placeholder slazy-resize"
+             src="1x1.png"
+             data-slazy-src="https://picsum.photos/800/600?random=1"
+             alt="Demo image 1">
+      </div>
+      <div class="card-content">
+        <div class="card-title">Image with Placeholder</div>
+        <div class="card-desc">Uses .slazy-placeholder class</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-image-wrapper">
+        <img class="slazy-placeholder slazy-resize"
+             src="1x1.png"
+             data-slazy-src="https://picsum.photos/800/600?random=2"
+             alt="Demo image 2">
+      </div>
+      <div class="card-content">
+        <div class="card-title">Another Example</div>
+        <div class="card-desc">Same shimmer animation</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-image-wrapper">
+        <img class="slazy-placeholder slazy-resize"
+             src="1x1.png"
+             data-slazy-src="https://picsum.photos/800/600?random=3"
+             alt="Demo image 3">
+      </div>
+      <div class="card-content">
+        <div class="card-title">Third Example</div>
+        <div class="card-desc">Tall card format</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-image-wrapper">
+        <img class="slazy-placeholder slazy-resize"
+             src="1x1.png"
+             data-slazy-src="https://picsum.photos/800/600?random=4"
+             alt="Demo image 4">
+      </div>
+      <div class="card-content">
+        <div class="card-title">Fourth Card</div>
+        <div class="card-desc">Grid layout demo</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-image-wrapper">
+        <img class="slazy-placeholder slazy-resize"
+             src="1x1.png"
+             data-slazy-src="https://picsum.photos/800/600?random=5"
+             alt="Demo image 5">
+      </div>
+      <div class="card-content">
+        <div class="card-title">Fifth Card</div>
+        <div class="card-desc">More content here</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-image-wrapper">
+        <img class="slazy-placeholder slazy-resize"
+             src="1x1.png"
+             data-slazy-src="https://picsum.photos/800/600?random=6"
+             alt="Demo image 6">
+      </div>
+      <div class="card-content">
+        <div class="card-title">Last Example</div>
+        <div class="card-desc">End of grid</div>
+      </div>
+    </div>
+  </div>
+
+  <p class="status" id="status">
+    Slazy is polling for images... Check DevTools → Elements → &lt;head&gt; to see injected CSS.
+  </p>
+
+  <!-- Load Slazy -->
+  <script src="slazy.js"></script>
+  <script>
+    // Demo helper functions
+    function reloadImages() {
+      const images = document.querySelectorAll('img[data-slazy-src]');
+      images.forEach(img => {
+        // Reset for demo
+        img.classList.remove('slazy-image-loaded');
+        img.removeAttribute('src');
+        img.setAttribute('src', '1x1.png');
+        img.removeAttribute('data-queue');
+        img.removeAttribute('data-retry-count');
+      });
+      // Restart polling
+      if (window.Slazy) {
+        Slazy.restart();
+      }
+      document.getElementById('status').textContent = 'Reloaded - shimmer should appear';
+    }
+
+    function addNewImages() {
+      const grid = document.getElementById('imageGrid');
+      const randomId = Math.floor(Math.random() * 1000);
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <div class="card-image-wrapper">
+          <img class="slazy-placeholder slazy-resize"
+               src="1x1.png"
+               data-slazy-src="https://picsum.photos/800/600?random=${randomId}"
+               alt="Dynamic image">
+        </div>
+        <div class="card-content">
+          <div class="card-title">Dynamically Added</div>
+          <div class="card-desc">Added at ${new Date().toLocaleTimeString()}</div>
+        </div>
+      `;
+      grid.appendChild(card);
+      document.getElementById('status').textContent = 'New image added with shimmer';
+    }
+
+    // Check CSS injection
+    setTimeout(() => {
+      const style = document.getElementById('slazy-styles');
+      if (style) {
+        console.log('Slazy CSS injected:', style.textContent.substring(0, 200) + '...');
+      } else {
+        console.warn('Slazy CSS not found');
+      }
+    }, 100);
+  </script>
+</body>
+</html>

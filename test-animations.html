@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Slazy Animation Options</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 40px;
+      background: #f0f0f0;
+    }
+
+    h2 {
+      margin-bottom: 10px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+      gap: 30px;
+      margin-top: 30px;
+    }
+
+    .demo {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .demo-box {
+      width: 100%;
+      height: 150px;
+      background: #e2e8f0;
+      border-radius: 8px;
+      margin: 15px 0;
+    }
+
+    .label {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 5px;
+    }
+
+    .name {
+      font-weight: 600;
+      color: #333;
+      font-size: 16px;
+    }
+
+    /* Animation 1: Original Shimmer */
+    .anim-shimmer {
+      position: relative;
+      overflow: hidden;
+    }
+    .anim-shimmer::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.6) 45%,
+        rgba(255, 255, 255, 0.8) 50%,
+        rgba(255, 255, 255, 0.6) 55%,
+        transparent 100%
+      );
+      animation: shimmer 1.5s infinite;
+    }
+    @keyframes shimmer {
+      0% { left: -100%; }
+      100% { left: 100%; }
+    }
+
+    /* Animation 2: Pulse */
+    .anim-pulse {
+      animation: pulse 1.5s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Animation 3: Wave */
+    .anim-wave {
+      position: relative;
+      overflow: hidden;
+    }
+    .anim-wave::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 200%;
+      height: 100%;
+      background: repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 10%,
+        rgba(255, 255, 255, 0.3) 20%,
+        rgba(255, 255, 255, 0.5) 30%,
+        rgba(255, 255, 255, 0.3) 40%,
+        transparent 50%
+      );
+      animation: wave 2s linear infinite;
+    }
+    @keyframes wave {
+      0% { transform: translateX(-50%); }
+      100% { transform: translateX(0); }
+    }
+
+    /* Animation 4: Pulse Glow */
+    .anim-glow {
+      position: relative;
+      overflow: hidden;
+    }
+    .anim-glow::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(
+        circle at center,
+        rgba(255, 255, 255, 0.5) 0%,
+        transparent 70%
+      );
+      animation: glow 2s ease-in-out infinite;
+    }
+    @keyframes glow {
+      0%, 100% { opacity: 0.3; transform: scale(0.8); }
+      50% { opacity: 0.8; transform: scale(1.2); }
+    }
+
+    /* Animation 5: Progress Bar */
+    .anim-progress {
+      position: relative;
+      overflow: hidden;
+    }
+    .anim-progress::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      width: 30%;
+      background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.6) 50%,
+        rgba(255, 255, 255, 0) 100%
+      );
+      animation: progress 1.5s ease-in-out infinite;
+    }
+    @keyframes progress {
+      0% { left: -30%; }
+      100% { left: 100%; }
+    }
+
+    /* Animation 6: Dark Shimmer (more contrast) */
+    .anim-dark {
+      position: relative;
+      overflow: hidden;
+      background: #94a3b8 !important;
+    }
+    .anim-dark::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.7) 45%,
+        rgba(255, 255, 255, 0.9) 50%,
+        rgba(255, 255, 255, 0.7) 55%,
+        transparent 100%
+      );
+      animation: darkshimmer 1.5s infinite;
+    }
+    @keyframes darkshimmer {
+      0% { left: -100%; }
+      100% { left: 100%; }
+    }
+
+    /* Animation 7: Bouncing Dot */
+    .anim-dots {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .anim-dots::before,
+    .anim-dots::after {
+      content: "";
+      width: 12px;
+      height: 12px;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 50%;
+      animation: bounce 1.4s ease-in-out infinite both;
+    }
+    .anim-dots::before {
+      animation-delay: -0.32s;
+    }
+    .anim-dots {
+      position: relative;
+    }
+    .anim-dots > .dot {
+      width: 12px;
+      height: 12px;
+      background: rgba(255, 255, 255, 0.7);
+      border-radius: 50%;
+      animation: bounce 1.4s ease-in-out infinite both;
+      animation-delay: -0.16s;
+    }
+    @keyframes bounce {
+      0%, 80%, 100% { transform: scale(0.6); opacity: 0.5; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+
+    /* Animation 8: Spinning Ring */
+    .anim-spin {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .anim-spin::before {
+      content: "";
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(255, 255, 255, 0.3);
+      border-top-color: rgba(255, 255, 255, 0.9);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <h2>Animation Options for Slazy Loading</h2>
+  <p>Compare these animations. Pick one you like and I'll update the slazy.js to use it.</p>
+
+  <div class="grid">
+    <div class="demo">
+      <div class="name">1. Original Shimmer</div>
+      <div class="label">White gradient sweep</div>
+      <div class="demo-box anim-shimmer"></div>
+    </div>
+
+    <div class="demo">
+      <div class="name">2. Pulse</div>
+      <div class="label">Fade in/out entire box</div>
+      <div class="demo-box anim-pulse"></div>
+    </div>
+
+    <div class="demo">
+      <div class="name">3. Wave</div>
+      <div class="label">Multiple shimmer bars</div>
+      <div class="demo-box anim-wave"></div>
+    </div>
+
+    <div class="demo">
+      <div class="name">4. Pulse Glow</div>
+      <div class="label">Radial glow from center</div>
+      <div class="demo-box anim-glow"></div>
+    </div>
+
+    <div class="demo">
+      <div class="name">5. Progress Bar</div>
+      <div class="label">Solid bar moving across</div>
+      <div class="demo-box anim-progress"></div>
+    </div>
+
+    <div class="demo">
+      <div class="name">6. Dark Shimmer</div>
+      <div class="label">Darker background = more contrast</div>
+      <div class="demo-box anim-dark"></div>
+    </div>
+
+    <div class="demo">
+      <div class="name">7. Bouncing Dots</div>
+      <div class="label">Three dots bouncing (centered)</div>
+      <div class="demo-box anim-dots"><div class="dot"></div></div>
+    </div>
+
+    <div class="demo">
+      <div class="name">8. Spinning Ring</div>
+      <div class="label">Classic loading spinner (centered)</div>
+      <div class="demo-box anim-spin"></div>
+    </div>
+  </div>
+
+  <p style="margin-top: 40px; color: #666; font-size: 14px;">
+    <strong>Note:</strong> Animations 6 (Dark Shimmer) has the most visible contrast because the background is darker.<br>
+    Animations 7 & 8 show centered indicators instead of full-overlay effects.
+  </p>
+</body>
+</html>

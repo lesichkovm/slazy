@@ -29,7 +29,10 @@
   const PLACEHOLDER_BACKGROUND_COLOR = "#e2e8f0";
   const DATA_PLACEHOLDER_ACTIVE = "placeholder-active";
   const DATA_PLACEHOLDER_ORIGINAL_BGCOLOR = "placeholder-original-bgcolor";
+  const DATA_PLACEHOLDER_ACTIVATED_AT = "placeholder-activated-at";
   const DATA_RETRY_COUNT = "retry-count";
+
+  const MIN_PLACEHOLDER_DISPLAY_MS = 400;
 
   const MAX_RETRY_ATTEMPTS = 3;
 
@@ -52,34 +55,31 @@
     const css = `
       .slazy-placeholder-active {
         position: relative;
-        overflow: hidden;
       }
 
       .slazy-placeholder-active::before {
         content: "";
         position: absolute;
-        top: 0;
-        left: -100%;
-        width: 100%;
-        height: 100%;
-        background: linear-gradient(
-          90deg,
-          transparent 0%,
-          rgba(255, 255, 255, 0.4) 50%,
-          transparent 100%
-        );
-        animation: slazy-shimmer 1.5s infinite;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 50px;
+        height: 50px;
+        border: 5px solid rgba(255, 255, 255, 0.25);
+        border-top-color: rgba(255, 255, 255, 1);
+        border-radius: 50%;
+        animation: slazy-spin 0.6s linear infinite, slazy-pulse 1.2s ease-in-out infinite;
         pointer-events: none;
         z-index: 1;
       }
 
-      @keyframes slazy-shimmer {
-        0% {
-          left: -100%;
-        }
-        100% {
-          left: 100%;
-        }
+      @keyframes slazy-spin {
+        to { transform: translate(-50%, -50%) rotate(360deg); }
+      }
+
+      @keyframes slazy-pulse {
+        0%, 100% { opacity: 0.7; transform: translate(-50%, -50%) scale(0.95); }
+        50% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
       }
 
       .slazy-image-loaded {
@@ -434,6 +434,23 @@
   }
 
   /**
+   * Gets the element to apply placeholder styling to.
+   * For img tags, uses parent element since ::before doesn't work on replaced elements.
+   *
+   * @param {Element} element - Original target element.
+   * @returns {Element} Element to apply placeholder classes to.
+   */
+  function getPlaceholderTarget(element) {
+    if (!element) {
+      return null;
+    }
+    if (element.tagName && element.tagName.toLowerCase() === "img" && element.parentElement) {
+      return element.parentElement;
+    }
+    return element;
+  }
+
+  /**
    * Applies a lightweight placeholder background when `.slazy-placeholder` is present.
    *
    * @param {Element} element - Target element.
@@ -443,29 +460,36 @@
       return;
     }
 
-    if (getData(element, DATA_PLACEHOLDER_ACTIVE) === "true") {
+    const target = getPlaceholderTarget(element);
+    if (!target) {
       return;
     }
 
-    if (element.style) {
-      const existingColor =
-        typeof element.style.backgroundColor === "string" ? element.style.backgroundColor : "";
+    if (getData(target, DATA_PLACEHOLDER_ACTIVE) === "true") {
+      return;
+    }
 
-      if (!getData(element, DATA_PLACEHOLDER_ORIGINAL_BGCOLOR) && existingColor) {
-        setData(element, DATA_PLACEHOLDER_ORIGINAL_BGCOLOR, existingColor);
+    if (target.style) {
+      const existingColor =
+        typeof target.style.backgroundColor === "string" ? target.style.backgroundColor : "";
+
+      if (!getData(target, DATA_PLACEHOLDER_ORIGINAL_BGCOLOR) && existingColor) {
+        setData(target, DATA_PLACEHOLDER_ORIGINAL_BGCOLOR, existingColor);
       }
 
       if (!existingColor) {
-        element.style.backgroundColor = PLACEHOLDER_BACKGROUND_COLOR;
+        target.style.backgroundColor = PLACEHOLDER_BACKGROUND_COLOR;
       }
     }
 
-    setData(element, DATA_PLACEHOLDER_ACTIVE, "true");
-    addClass(element, CLASS_PLACEHOLDER_ACTIVE);
+    setData(target, DATA_PLACEHOLDER_ACTIVE, "true");
+    setData(target, DATA_PLACEHOLDER_ACTIVATED_AT, String(Date.now()));
+    addClass(target, CLASS_PLACEHOLDER_ACTIVE);
   }
 
   /**
    * Clears previously applied placeholder styling.
+   * Enforces a minimum display time so the loading animation is visible.
    *
    * @param {Element} element - Target element.
    */
@@ -474,24 +498,42 @@
       return;
     }
 
-    if (getData(element, DATA_PLACEHOLDER_ACTIVE) !== "true") {
+    const target = getPlaceholderTarget(element);
+    if (!target) {
       return;
     }
 
-    if (element.style) {
-      const originalColor = getData(element, DATA_PLACEHOLDER_ORIGINAL_BGCOLOR);
-      if (originalColor) {
-        element.style.backgroundColor = originalColor;
-      } else if (typeof element.style.removeProperty === "function") {
-        element.style.removeProperty("background-color");
-      } else {
-        element.style.backgroundColor = "";
-      }
+    if (getData(target, DATA_PLACEHOLDER_ACTIVE) !== "true") {
+      return;
     }
 
-    removeData(element, DATA_PLACEHOLDER_ORIGINAL_BGCOLOR);
-    removeData(element, DATA_PLACEHOLDER_ACTIVE);
-    removeClass(element, CLASS_PLACEHOLDER_ACTIVE);
+    const activatedAt = Number(getData(target, DATA_PLACEHOLDER_ACTIVATED_AT));
+    const elapsed = Number.isFinite(activatedAt) ? Date.now() - activatedAt : MIN_PLACEHOLDER_DISPLAY_MS;
+    const remaining = Math.max(0, MIN_PLACEHOLDER_DISPLAY_MS - elapsed);
+
+    function doClear() {
+      if (target.style) {
+        const originalColor = getData(target, DATA_PLACEHOLDER_ORIGINAL_BGCOLOR);
+        if (originalColor) {
+          target.style.backgroundColor = originalColor;
+        } else if (typeof target.style.removeProperty === "function") {
+          target.style.removeProperty("background-color");
+        } else {
+          target.style.backgroundColor = "";
+        }
+      }
+
+      removeData(target, DATA_PLACEHOLDER_ORIGINAL_BGCOLOR);
+      removeData(target, DATA_PLACEHOLDER_ACTIVE);
+      removeData(target, DATA_PLACEHOLDER_ACTIVATED_AT);
+      removeClass(target, CLASS_PLACEHOLDER_ACTIVE);
+    }
+
+    if (remaining > 0) {
+      setTimeout(doClear, remaining);
+    } else {
+      doClear();
+    }
   }
 
   /**
@@ -804,6 +846,7 @@
           return;
         }
 
+        // Activate placeholder immediately for visual feedback
         activatePlaceholder(element);
 
         const widthCss = getStyleValue(element, "width");
