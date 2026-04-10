@@ -116,6 +116,10 @@ The element will still lazy load, but the `data-slazy-*` URL is used verbatim.
 
 Add the `.slazy-placeholder` class when you want Slazy to provide a neutral background colour while the real asset is loading. When the upgraded image or background finishes, the helper restores the original styling and removes the helper class.
 
+### Loading Animation
+
+Slazy automatically injects CSS for a shimmer loading animation on placeholder elements. When an element has the `.slazy-placeholder` class, a subtle animated shimmer effect displays while waiting for the image to load. This provides visual feedback and avoids the appearance of a static gray "glitch".
+
 ```html
 <img
   class="product slazy-resize slazy-placeholder"

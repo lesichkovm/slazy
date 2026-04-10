@@ -36,6 +36,73 @@
   const api = {};
 
   /**
+   * Injects the Slazy CSS styles into the document head.
+   * Creates a style element with loading animations for placeholder states.
+   */
+  function injectStyles() {
+    if (typeof document === "undefined" || typeof document.createElement !== "function") {
+      return;
+    }
+
+    const styleId = "slazy-styles";
+    if (document.getElementById(styleId)) {
+      return;
+    }
+
+    const css = `
+      .slazy-placeholder-active {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .slazy-placeholder-active::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent 0%,
+          rgba(255, 255, 255, 0.4) 50%,
+          transparent 100%
+        );
+        animation: slazy-shimmer 1.5s infinite;
+        pointer-events: none;
+        z-index: 1;
+      }
+
+      @keyframes slazy-shimmer {
+        0% {
+          left: -100%;
+        }
+        100% {
+          left: 100%;
+        }
+      }
+
+      .slazy-image-loaded {
+        opacity: 1;
+        transition: opacity 0.3s ease;
+      }
+
+      .slazy-load-failed {
+        position: relative;
+      }
+    `;
+
+    const styleElement = document.createElement("style");
+    styleElement.id = styleId;
+    styleElement.textContent = css;
+
+    const head = document.head || document.getElementsByTagName("head")[0];
+    if (head) {
+      head.appendChild(styleElement);
+    }
+  }
+
+  /**
    * Clears the active interval responsible for image polling, if any.
    * Ensures repeated calls are safe when no timer is scheduled.
    */
@@ -957,6 +1024,7 @@
     typeof window !== "undefined";
 
   if (hasDomAccess) {
+    injectStyles();
     startPolling();
   }
 
